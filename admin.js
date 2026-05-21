@@ -45,7 +45,7 @@ async function cargarEstacion() {
   const { data, error } = await supabase
     .from("estaciones")
     .select("*")
-    .eq("user_id", usuario.id)
+    .eq("slug", "shell-lomas")
     .single();
 
   if (error || !data) {
@@ -217,3 +217,4 @@ async function cargarPromos() {
 }
 
 verificarSesion();
+
