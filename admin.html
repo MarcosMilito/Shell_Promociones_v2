@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel de Administración</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="admin-body">
+
+  <main class="admin">
+
+    <section id="loginBox" class="card">
+      <h1>Ingresar</h1>
+
+      <input type="email" id="email" placeholder="Email">
+      <input type="password" id="password" placeholder="Contraseña">
+
+      <button id="btnLogin">Iniciar sesión</button>
+    </section>
+
+    <section id="adminBox" class="card hidden">
+      <h1 id="tituloEstacion">Panel de promociones</h1>
+
+      <button id="btnSubir">Subir imagen o video</button>
+      <button id="btnLogout" class="secondary">Cerrar sesión</button>
+
+      <p class="help">
+        Formatos recomendados: JPG, PNG, WEBP y MP4. Resolución ideal: 1920 x 1080.
+      </p>
+
+      <h2>Promociones cargadas</h2>
+
+      <div id="listaPromos"></div>
+    </section>
+
+  </main>
+
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
