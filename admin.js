@@ -10,7 +10,6 @@ const btnSubir = document.getElementById("btnSubir");
 const listaPromos = document.getElementById("listaPromos");
 const tituloEstacion = document.getElementById("tituloEstacion");
 
-const nombrePromo = document.getElementById("nombrePromo");
 const archivoHorizontal = document.getElementById("archivoHorizontal");
 const archivoVertical = document.getElementById("archivoVertical");
 
@@ -149,7 +148,6 @@ async function subirPromo() {
       return;
     }
 
-    nombrePromo.value = "";
     archivoHorizontal.value = "";
     archivoVertical.value = "";
 
