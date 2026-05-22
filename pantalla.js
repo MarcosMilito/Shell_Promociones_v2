@@ -9,6 +9,7 @@ let estacionId = null;
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get("estacion");
+const orientacion = params.get("orientacion") || "horizontal";
 
 async function obtenerEstacion() {
   const { data, error } = await supabase
@@ -40,9 +41,30 @@ async function cargarPromos() {
     return;
   }
 
-  promociones = data;
+  promociones = data.filter(promo => {
+    if (orientacion === "vertical") {
+      return promo.url_vertical || promo.url_horizontal;
+    }
+
+    return promo.url_horizontal || promo.url_vertical;
+  });
+
   indice = 0;
   mostrarPromo();
+}
+
+function obtenerArchivoPromo(promo) {
+  if (orientacion === "vertical") {
+    return {
+      url: promo.url_vertical || promo.url_horizontal,
+      tipo: promo.tipo_vertical || promo.tipo_horizontal
+    };
+  }
+
+  return {
+    url: promo.url_horizontal || promo.url_vertical,
+    tipo: promo.tipo_horizontal || promo.tipo_vertical
+  };
 }
 
 function mostrarPromo() {
@@ -52,19 +74,25 @@ function mostrarPromo() {
   if (promociones.length === 0) return;
 
   const promo = promociones[indice];
+  const archivo = obtenerArchivoPromo(promo);
 
-  if (promo.tipo === "imagen") {
+  if (!archivo.url) {
+    siguientePromo();
+    return;
+  }
+
+  if (archivo.tipo === "imagen") {
     const img = document.createElement("img");
-    img.src = promo.url;
+    img.src = archivo.url;
 
     slider.appendChild(img);
 
     temporizador = setTimeout(siguientePromo, 7000);
   }
 
-  if (promo.tipo === "video") {
+  if (archivo.tipo === "video") {
     const video = document.createElement("video");
-    video.src = promo.url;
+    video.src = archivo.url;
     video.autoplay = true;
     video.muted = true;
     video.playsInline = true;

@@ -166,3 +166,29 @@ input {
   object-fit: cover;
   display: block;
 }
+
+.upload-box {
+  background: #2a2a2a;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.upload-box label {
+  display: block;
+  margin: 12px 0 6px;
+  font-weight: bold;
+}
+
+.vertical-preview {
+  width: 60px;
+  height: 100px;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  font-size: 12px;
+}

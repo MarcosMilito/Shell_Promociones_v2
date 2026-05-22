@@ -10,6 +10,10 @@ const btnSubir = document.getElementById("btnSubir");
 const listaPromos = document.getElementById("listaPromos");
 const tituloEstacion = document.getElementById("tituloEstacion");
 
+const nombrePromo = document.getElementById("nombrePromo");
+const archivoHorizontal = document.getElementById("archivoHorizontal");
+const archivoVertical = document.getElementById("archivoVertical");
+
 let usuario = null;
 let estacion = null;
 
@@ -45,7 +49,7 @@ async function cargarEstacion() {
   const { data, error } = await supabase
     .from("estaciones")
     .select("*")
-    .eq("slug", "shell-lomas")
+    .eq("user_id", usuario.id)
     .single();
 
   if (error || !data) {
@@ -73,59 +77,89 @@ async function logout() {
   adminBox.classList.add("hidden");
 }
 
+function obtenerTipo(file) {
+  if (!file) return null;
+  return file.type.startsWith("video") ? "video" : "imagen";
+}
+
+async function subirArchivo(file, orientacion) {
+  if (!file) return null;
+
+  const extension = file.name.split(".").pop();
+  const nombreArchivo = `${Date.now()}-${orientacion}.${extension}`;
+  const path = `${estacion.slug}/${orientacion}/${nombreArchivo}`;
+
+  const { error } = await supabase.storage
+    .from("promos")
+    .upload(path, file);
+
+  if (error) {
+    console.error(error);
+    throw new Error("Error al subir archivo");
+  }
+
+  const { data } = supabase.storage
+    .from("promos")
+    .getPublicUrl(path);
+
+  return {
+    url: data.publicUrl,
+    path: path,
+    tipo: obtenerTipo(file)
+  };
+}
+
 async function subirPromo() {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "image/*,video/*";
+  const fileHorizontal = archivoHorizontal.files[0];
+  const fileVertical = archivoVertical.files[0];
 
-  input.click();
+  if (!fileHorizontal && !fileVertical) {
+    alert("Tenés que subir al menos un archivo horizontal o vertical.");
+    return;
+  }
 
-  input.onchange = async () => {
-    const file = input.files[0];
+  try {
+    const horizontal = await subirArchivo(fileHorizontal, "horizontal");
+    const vertical = await subirArchivo(fileVertical, "vertical");
 
-    if (!file) return;
-
-    const esVideo = file.type.startsWith("video");
-    const tipo = esVideo ? "video" : "imagen";
-
-    const extension = file.name.split(".").pop();
-    const nombreArchivo = `${Date.now()}.${extension}`;
-    const path = `${estacion.slug}/${nombreArchivo}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("promos")
-      .upload(path, file);
-
-    if (uploadError) {
-      alert("Error al subir el archivo");
-      console.error(uploadError);
-      return;
-    }
-
-    const { data: publicUrlData } = supabase.storage
-      .from("promos")
-      .getPublicUrl(path);
-
-    const { error: insertError } = await supabase
+    const { error } = await supabase
       .from("promociones")
       .insert({
         estacion_id: estacion.id,
-        tipo: tipo,
-        url: publicUrlData.publicUrl,
-        path: path,
         activo: true,
-        orden: 1
+        orden: 1,
+
+        tipo: "promo",
+
+        url_horizontal: horizontal ? horizontal.url : null,
+        path_horizontal: horizontal ? horizontal.path : null,
+        tipo_horizontal: horizontal ? horizontal.tipo : null,
+
+        url_vertical: vertical ? vertical.url : null,
+        path_vertical: vertical ? vertical.path : null,
+        tipo_vertical: vertical ? vertical.tipo : null,
+
+        url: horizontal ? horizontal.url : vertical.url,
+        path: horizontal ? horizontal.path : vertical.path
       });
 
-    if (insertError) {
+    if (error) {
+      console.error(error);
       alert("Error al guardar la promoción");
-      console.error(insertError);
       return;
     }
 
-    alert("Promoción subida correctamente");
+    nombrePromo.value = "";
+    archivoHorizontal.value = "";
+    archivoVertical.value = "";
+
+    alert("Promoción guardada correctamente");
     cargarPromos();
-  };
+
+  } catch (error) {
+    alert("Error al subir la promoción");
+    console.error(error);
+  }
 }
 
 async function cargarPromos() {
@@ -151,16 +185,23 @@ async function cargarPromos() {
     const div = document.createElement("div");
     div.className = promo.activo ? "promo-item" : "promo-item inactive";
 
-    const preview = promo.tipo === "imagen"
-      ? `<img class="promo-preview" src="${promo.url}">`
-      : `<video class="promo-preview" src="${promo.url}" muted></video>`;
+    const previewHorizontal = promo.url_horizontal
+      ? `<img class="promo-preview" src="${promo.url_horizontal}">`
+      : `<div class="promo-preview empty">Sin horizontal</div>`;
+
+    const previewVertical = promo.url_vertical
+      ? `<img class="promo-preview vertical-preview" src="${promo.url_vertical}">`
+      : `<div class="promo-preview empty">Sin vertical</div>`;
 
     div.innerHTML = `
       <div class="promo-info">
-        ${preview}
+        ${previewHorizontal}
+        ${previewVertical}
         <div>
-          <strong>${promo.tipo.toUpperCase()}</strong>
+          <strong>PROMOCIÓN</strong>
           <p>${promo.activo ? "Activa" : "Inactiva"}</p>
+          <p>Horizontal: ${promo.url_horizontal ? "Cargada" : "No cargada"}</p>
+          <p>Vertical: ${promo.url_vertical ? "Cargada" : "No cargada"}</p>
         </div>
       </div>
 
@@ -169,7 +210,7 @@ async function cargarPromos() {
           ${promo.activo ? "Desactivar" : "Activar"}
         </button>
 
-        <button class="delete" data-delete="${promo.id}" data-path="${promo.path}">
+        <button class="delete" data-delete="${promo.id}">
           Eliminar
         </button>
       </div>
@@ -181,7 +222,6 @@ async function cargarPromos() {
   document.querySelectorAll("[data-toggle]").forEach(btn => {
     btn.addEventListener("click", async () => {
       const id = btn.dataset.toggle;
-
       const promo = data.find(p => p.id === id);
 
       await supabase
@@ -200,11 +240,18 @@ async function cargarPromos() {
       if (!confirmar) return;
 
       const id = btn.dataset.delete;
-      const path = btn.dataset.path;
+      const promo = data.find(p => p.id === id);
 
-      await supabase.storage
-        .from("promos")
-        .remove([path]);
+      const archivosAEliminar = [];
+
+      if (promo.path_horizontal) archivosAEliminar.push(promo.path_horizontal);
+      if (promo.path_vertical) archivosAEliminar.push(promo.path_vertical);
+
+      if (archivosAEliminar.length > 0) {
+        await supabase.storage
+          .from("promos")
+          .remove(archivosAEliminar);
+      }
 
       await supabase
         .from("promociones")
@@ -217,4 +264,3 @@ async function cargarPromos() {
 }
 
 verificarSesion();
-
