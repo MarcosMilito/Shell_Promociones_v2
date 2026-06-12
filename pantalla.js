@@ -1,4 +1,10 @@
-import { supabase } from "./supabase-config.js";
+const SUPABASE_URL = "https://vymxicqitddocazvmpbr.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_a67bHY2v6IowOXGlQ6jmGQ_HV2h7dMA";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
 
 const slider = document.getElementById("slider");
 
@@ -6,7 +12,6 @@ let promociones = [];
 let indice = 0;
 let temporizador = null;
 let estacionId = null;
-let canalRealtime = null;
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get("estacion");
@@ -18,28 +23,31 @@ async function obtenerEstacion() {
     return;
   }
 
-  const { data, error } = await supabase
+  const respuesta = await supabaseClient
     .from("estaciones")
     .select("*")
     .eq("slug", slug)
     .single();
 
-  if (error || !data) {
-    console.error("No se encontró la estación:", error);
+  if (respuesta.error || !respuesta.data) {
+    console.error("No se encontró la estación:", respuesta.error);
     slider.innerHTML = "";
     return;
   }
 
-  estacionId = data.id;
+  estacionId = respuesta.data.id;
 
   await cargarPromos();
-  escucharCambios();
+
+  // En TV evitamos depender de realtime/websocket.
+  // Mejor refrescar cada 30 segundos.
+  setInterval(cargarPromos, 30000);
 }
 
 async function cargarPromos() {
   if (!estacionId) return;
 
-  const { data, error } = await supabase
+  const respuesta = await supabaseClient
     .from("promociones")
     .select("*")
     .eq("estacion_id", estacionId)
@@ -47,19 +55,14 @@ async function cargarPromos() {
     .order("orden", { ascending: true })
     .order("created_at", { ascending: true });
 
-  if (error) {
-    console.error("Error al cargar promociones:", error);
+  if (respuesta.error) {
+    console.error("Error al cargar promociones:", respuesta.error);
     return;
   }
 
-  /*
-    CORRECCIÓN IMPORTANTE:
-    - Pantalla horizontal: solo muestra promociones con archivo horizontal.
-    - Pantalla vertical: solo muestra promociones con archivo vertical.
-    - No hay fallback entre orientaciones.
-  */
+  const data = respuesta.data || [];
 
-  promociones = data.filter(promo => {
+  promociones = data.filter(function (promo) {
     if (orientacion === "vertical") {
       return Boolean(promo.url_vertical && promo.tipo_vertical);
     }
@@ -106,6 +109,10 @@ function mostrarPromo() {
     img.src = archivo.url;
     img.alt = "Promoción";
 
+    img.onerror = function () {
+      siguientePromo();
+    };
+
     slider.appendChild(img);
 
     temporizador = setTimeout(siguientePromo, 7000);
@@ -118,14 +125,27 @@ function mostrarPromo() {
     video.autoplay = true;
     video.muted = true;
     video.playsInline = true;
+    video.setAttribute("playsinline", "");
+    video.setAttribute("muted", "");
+    video.setAttribute("autoplay", "");
+
+    video.onerror = function () {
+      siguientePromo();
+    };
+
+    video.onended = function () {
+      siguientePromo();
+    };
 
     slider.appendChild(video);
 
-    video.onended = siguientePromo;
+    const playPromise = video.play();
 
-    video.onerror = () => {
-      siguientePromo();
-    };
+    if (playPromise !== undefined) {
+      playPromise.catch(function () {
+        siguientePromo();
+      });
+    }
 
     return;
   }
@@ -143,28 +163,6 @@ function siguientePromo() {
   }
 
   mostrarPromo();
-}
-
-function escucharCambios() {
-  if (canalRealtime) {
-    supabase.removeChannel(canalRealtime);
-  }
-
-  canalRealtime = supabase
-    .channel("promociones-" + estacionId)
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "promociones",
-        filter: `estacion_id=eq.${estacionId}`
-      },
-      async () => {
-        await cargarPromos();
-      }
-    )
-    .subscribe();
 }
 
 obtenerEstacion();
