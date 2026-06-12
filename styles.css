@@ -609,18 +609,3 @@ input[type="file"] {
   text-decoration: none;
   margin-bottom: 18px;
 }
-
-.home-links {
-  display: grid;
-  gap: 10px;
-}
-
-.home-links a {
-  color: #dbeafe;
-  text-decoration: none;
-  font-size: 14px;
-}
-
-.home-links a:hover {
-  color: #ffb000;
-}
