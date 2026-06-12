@@ -396,7 +396,7 @@ function limpiarSeleccion() {
 async function copiarLink(orientacion) {
   if (!estacion) return;
 
-  const link = `${window.location.origin}/pantalla.html?estacion=${estacion.slug}&orientacion=${orientacion}`;
+  const link = `${window.location.origin}/pantalla.html?screen=${estacion.slug}-${orientacion}`;
 
   try {
     await navigator.clipboard.writeText(link);

@@ -14,9 +14,25 @@ let temporizador = null;
 let estacionId = null;
 
 const params = new URLSearchParams(window.location.search);
-const slug = params.get("estacion");
-const orientacion = params.get("orientacion") === "vertical" ? "vertical" : "horizontal";
 
+let slug = "";
+let orientacion = "horizontal";
+
+const screen = params.get("screen");
+
+  if (screen) {
+    if (screen.endsWith("-vertical")) {
+      orientacion = "vertical";
+      slug = screen.replace("-vertical", "");
+    } else if (screen.endsWith("-horizontal")) {
+      orientacion = "horizontal";
+      slug = screen.replace("-horizontal", "");
+    }
+  } else {
+    slug = params.get("estacion");
+    orientacion = params.get("orientacion") === "vertical" ? "vertical" : "horizontal";
+  }
+  
 async function obtenerEstacion() {
   if (!slug) {
     slider.innerHTML = "";
