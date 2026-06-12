@@ -4,148 +4,491 @@
   box-sizing: border-box;
 }
 
+:root {
+  --bg-main: #07090f;
+  --bg-card: rgba(255, 255, 255, 0.08);
+  --bg-card-solid: #151924;
+  --bg-card-soft: #1f2533;
+  --border-soft: rgba(255, 255, 255, 0.12);
+  --text-main: #ffffff;
+  --text-muted: #aeb7c8;
+  --accent: #ffb000;
+  --accent-2: #ff7a18;
+  --danger: #dc2626;
+  --success: #22c55e;
+  --blue: #38bdf8;
+  --violet: #a78bfa;
+  --radius-xl: 24px;
+  --radius-lg: 18px;
+  --radius-md: 12px;
+}
+
 body {
-  font-family: Arial, sans-serif;
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  color: var(--text-main);
 }
 
-/* HOME */
+/* =========================
+   ADMIN / LOGIN
+========================= */
 
-.home-body {
-  background: #111;
-  color: white;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.admin-body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(255, 176, 0, 0.2), transparent 34%),
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.14), transparent 30%),
+    linear-gradient(135deg, #07090f 0%, #111827 100%);
+  overflow-x: hidden;
 }
 
-.home {
-  background: #1f1f1f;
-  padding: 40px;
-  border-radius: 20px;
-  width: 520px;
-  text-align: center;
-}
-
-.home h1 {
-  font-size: 36px;
-  margin-bottom: 15px;
-}
-
-.home p {
-  color: #ccc;
-  margin-bottom: 25px;
-}
-
-.btn,
-button {
-  display: inline-block;
-  width: 100%;
-  padding: 15px;
-  background: #ffb000;
-  color: #111;
-  border: none;
-  border-radius: 12px;
-  font-size: 17px;
-  font-weight: bold;
-  text-decoration: none;
-  cursor: pointer;
-  margin-bottom: 12px;
-}
-
-.secondary {
-  background: #333;
-  color: white;
+.admin-layout {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 36px 0;
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
-/* ADMIN */
-
-.admin-body {
-  background: #111;
-  color: white;
-  min-height: 100vh;
-  padding: 40px;
+.login-card {
+  width: min(440px, 100%);
+  margin: 8vh auto 0;
+  padding: 34px;
+  background: rgba(21, 25, 36, 0.88);
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
 }
 
-.admin {
-  max-width: 900px;
-  margin: auto;
-}
-
-.card {
-  background: #1f1f1f;
-  padding: 30px;
-  border-radius: 18px;
-}
-
-.card h1,
-.card h2 {
-  margin-bottom: 20px;
-}
-
-input {
-  width: 100%;
-  padding: 15px;
-  border-radius: 10px;
-  border: none;
+.login-badge,
+.section-label {
+  display: inline-block;
   margin-bottom: 12px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+}
+
+.login-card h1 {
+  font-size: 34px;
+  margin-bottom: 10px;
+}
+
+.login-card p {
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+label {
+  display: block;
+  color: #dbe3f3;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 15px 16px;
+  margin-bottom: 18px;
+  color: white;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  outline: none;
   font-size: 16px;
 }
 
-.help {
-  color: #ccc;
-  margin: 12px 0 25px;
+input[type="email"]:focus,
+input[type="password"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(255, 176, 0, 0.12);
 }
 
-.promo-item {
-  background: #2a2a2a;
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 14px;
+button {
+  font-family: inherit;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-link-copy {
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease;
+}
+
+.btn-primary {
+  width: 100%;
+  color: #161616;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 12px 30px rgba(255, 176, 0, 0.24);
+}
+
+.btn-secondary {
+  color: white;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid var(--border-soft);
+}
+
+.btn-link-copy {
+  width: 100%;
+  color: white;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.28), rgba(167, 139, 250, 0.24));
+  border: 1px solid var(--border-soft);
+}
+
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-link-copy:hover {
+  transform: translateY(-1px);
+  opacity: 0.96;
+}
+
+.small {
+  width: auto;
+  padding: 11px 14px;
+  font-size: 14px;
+}
+
+/* =========================
+   DASHBOARD
+========================= */
+
+.dashboard {
+  display: grid;
+  gap: 22px;
+}
+
+.dashboard-header,
+.links-card,
+.upload-card,
+.promos-section {
+  background: rgba(21, 25, 36, 0.86);
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.26);
+}
+
+.dashboard-header {
+  padding: 28px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 22px;
+}
+
+.dashboard-header h1 {
+  font-size: clamp(28px, 4vw, 46px);
+  line-height: 1.05;
+  margin-bottom: 10px;
+}
+
+.dashboard-header p,
+.links-card p,
+.help {
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.links-card {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 20px;
+  align-items: center;
+}
+
+.links-card h2,
+.upload-card h2,
+.promos-section h2 {
+  font-size: 24px;
+}
+
+.links-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+/* =========================
+   UPLOAD
+========================= */
+
+.upload-card {
+  padding: 26px;
+}
+
+.upload-header,
+.promos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.upload-note {
+  color: #111827;
+  background: var(--accent);
+  padding: 9px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.upload-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.upload-option {
+  position: relative;
+  padding: 20px;
+  min-height: 310px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+}
+
+.upload-option h3 {
+  font-size: 22px;
+  margin: 8px 0;
+}
+
+.upload-option p {
+  color: var(--text-muted);
+  margin-bottom: 18px;
+}
+
+.orientation-tag {
+  display: inline-block;
+  padding: 7px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.horizontal-tag {
+  color: #082f49;
+  background: #7dd3fc;
+}
+
+.vertical-tag {
+  color: #3b0764;
+  background: #d8b4fe;
+}
+
+input[type="file"] {
+  width: 100%;
+  color: var(--text-muted);
+  padding: 13px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px dashed rgba(255, 255, 255, 0.24);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.file-label {
+  margin-top: 14px;
+}
+
+.file-preview {
+  width: 100%;
+  height: 130px;
+  margin-top: 16px;
+  background: #05070c;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.file-preview.vertical {
+  height: 180px;
+}
+
+.file-preview img,
+.file-preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.empty-preview {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+}
+
+.upload-actions {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.help {
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.status-message {
+  margin-top: 12px;
+  min-height: 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.status-success {
+  color: var(--success);
+}
+
+.status-error {
+  color: #fca5a5;
+}
+
+/* =========================
+   LISTA PROMOS
+========================= */
+
+.promos-section {
+  padding: 26px;
+}
+
+.promos-list {
+  display: grid;
+  gap: 14px;
+}
+
+.promo-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+}
+
+.promo-item.inactive {
+  opacity: 0.48;
 }
 
 .promo-info {
   display: flex;
+  gap: 16px;
   align-items: center;
-  gap: 15px;
+}
+
+.preview-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.promo-preview-card {
+  width: 130px;
+}
+
+.promo-preview-card.vertical-card {
+  width: 82px;
+}
+
+.preview-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .promo-preview {
-  width: 140px;
-  height: 80px;
-  object-fit: cover;
-  background: black;
+  width: 100%;
+  height: 72px;
+  background: #05070c;
+  border: 1px solid var(--border-soft);
   border-radius: 10px;
+  object-fit: cover;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-align: center;
+  padding: 6px;
+}
+
+.vertical-card .promo-preview {
+  height: 110px;
+}
+
+.promo-preview img,
+.promo-preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.promo-meta strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 17px;
+}
+
+.promo-meta p {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .promo-actions {
   display: flex;
   gap: 10px;
+  align-items: center;
 }
 
 .promo-actions button {
   width: auto;
-  padding: 10px 14px;
-  font-size: 14px;
+  padding: 10px 13px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.toggle-btn {
+  color: white;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .delete {
-  background: #d62828;
   color: white;
+  background: var(--danger);
 }
 
-.inactive {
-  opacity: 0.45;
-}
-
-/* PANTALLA */
+/* =========================
+   PANTALLA TV
+========================= */
 
 .pantalla-body {
   margin: 0;
@@ -167,28 +510,54 @@ input {
   display: block;
 }
 
-.upload-box {
-  background: #2a2a2a;
-  padding: 20px;
-  border-radius: 16px;
-  margin-bottom: 20px;
-}
+/* =========================
+   RESPONSIVE
+========================= */
 
-.upload-box label {
-  display: block;
-  margin: 12px 0 6px;
-  font-weight: bold;
-}
+@media (max-width: 860px) {
+  .admin-layout {
+    width: min(100% - 22px, 1180px);
+    padding: 18px 0;
+  }
 
-.vertical-preview {
-  width: 60px;
-  height: 100px;
-}
+  .dashboard-header,
+  .upload-header,
+  .promos-header,
+  .links-card {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-.empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #aaa;
-  font-size: 12px;
+  .links-card {
+    display: grid;
+  }
+
+  .links-grid,
+  .upload-grid,
+  .upload-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .promo-item {
+    grid-template-columns: 1fr;
+  }
+
+  .promo-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .preview-group {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .promo-actions {
+    width: 100%;
+  }
+
+  .promo-actions button {
+    flex: 1;
+  }
 }

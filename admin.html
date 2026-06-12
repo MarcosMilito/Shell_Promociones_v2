@@ -2,46 +2,143 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Panel de Administración</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Promociones</title>
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body class="admin-body">
 
-  <main class="admin">
+  <main class="admin-layout">
 
-    <section id="loginBox" class="card">
-      <h1>Ingresar</h1>
+    <section id="loginBox" class="login-card">
+      <div class="login-badge">PANTALLAS DIGITALES</div>
 
-      <input type="email" id="email" placeholder="Email">
-      <input type="password" id="password" placeholder="Contraseña">
+      <h1>Ingresar al panel</h1>
+      <p>Administrá las promociones de tu estación desde un solo lugar.</p>
 
-      <button id="btnLogin">Iniciar sesión</button>
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="ejemplo@estacion.com" autocomplete="email">
+
+      <label for="password">Contraseña</label>
+      <input type="password" id="password" placeholder="Ingresá tu contraseña" autocomplete="current-password">
+
+      <button id="btnLogin" class="btn-primary">
+        Iniciar sesión
+      </button>
+
+      <p id="loginStatus" class="status-message"></p>
     </section>
 
-    <section id="adminBox" class="card hidden">
-      <h1 id="tituloEstacion">Panel de promociones</h1>
+    <section id="adminBox" class="dashboard hidden">
 
-      <div class="upload-box">
-        <h2>Nueva promoción</h2>
+      <header class="dashboard-header">
+        <div>
+          <span class="section-label">Panel administrador</span>
+          <h1 id="tituloEstacion">Promociones</h1>
+          <p>Subí imágenes o videos para pantallas horizontales y verticales.</p>
+        </div>
 
-        <label>Archivo horizontal 1920 x 1080</label>
-        <input type="file" id="archivoHorizontal" accept="image/*,video/*">
+        <button id="btnLogout" class="btn-secondary small">
+          Cerrar sesión
+        </button>
+      </header>
 
-        <label>Archivo vertical 1080 x 1920</label>
-        <input type="file" id="archivoVertical" accept="image/*,video/*">
+      <section class="links-card">
+        <div>
+          <h2>Links de pantalla</h2>
+          <p>Usá estos enlaces en las TVs de la estación.</p>
+        </div>
 
-        <button id="btnSubir">Guardar promoción</button>
-      </div>
+        <div class="links-grid">
+          <button id="btnCopiarHorizontal" class="btn-link-copy">
+            Copiar link horizontal
+          </button>
 
-      <button id="btnLogout" class="secondary">Cerrar sesión</button>
+          <button id="btnCopiarVertical" class="btn-link-copy">
+            Copiar link vertical
+          </button>
+        </div>
+      </section>
 
-      <p class="help">
-        Formatos recomendados: JPG, PNG, WEBP y MP4. Horizontal: 1920x1080. Vertical: 1080x1920.
-      </p>
+      <section class="upload-card">
+        <div class="upload-header">
+          <div>
+            <span class="section-label">Nueva promoción</span>
+            <h2>Cargar contenido</h2>
+          </div>
+          <span class="upload-note">JPG, PNG, WEBP, MP4</span>
+        </div>
 
-      <h2>Promociones cargadas</h2>
+        <div class="upload-grid">
 
-      <div id="listaPromos"></div>
+          <div class="upload-option">
+            <div class="orientation-tag horizontal-tag">Horizontal</div>
+            <h3>TV horizontal</h3>
+            <p>Formato recomendado: 1920 x 1080</p>
+
+            <label for="archivoHorizontal" class="file-label">
+              Seleccionar imagen o video horizontal
+            </label>
+
+            <input type="file" id="archivoHorizontal" accept="image/*,video/*">
+
+            <div id="previewHorizontal" class="file-preview empty-preview">
+              Sin archivo horizontal
+            </div>
+          </div>
+
+          <div class="upload-option">
+            <div class="orientation-tag vertical-tag">Vertical</div>
+            <h3>TV vertical</h3>
+            <p>Formato recomendado: 1080 x 1920</p>
+
+            <label for="archivoVertical" class="file-label">
+              Seleccionar imagen o video vertical
+            </label>
+
+            <input type="file" id="archivoVertical" accept="image/*,video/*">
+
+            <div id="previewVertical" class="file-preview vertical empty-preview">
+              Sin archivo vertical
+            </div>
+          </div>
+
+        </div>
+
+        <div class="upload-actions">
+          <button id="btnSubir" class="btn-primary">
+            Guardar promoción
+          </button>
+
+          <button id="btnLimpiar" class="btn-secondary">
+            Limpiar selección
+          </button>
+        </div>
+
+        <p class="help">
+          Si cargás solo archivo horizontal, esa promoción aparecerá únicamente en pantallas horizontales.
+          Si cargás solo archivo vertical, aparecerá únicamente en pantallas verticales.
+        </p>
+
+        <p id="uploadStatus" class="status-message"></p>
+      </section>
+
+      <section class="promos-section">
+        <div class="promos-header">
+          <div>
+            <span class="section-label">Contenido cargado</span>
+            <h2>Promociones activas e inactivas</h2>
+          </div>
+
+          <button id="btnRefrescar" class="btn-secondary small">
+            Actualizar lista
+          </button>
+        </div>
+
+        <div id="listaPromos" class="promos-list"></div>
+      </section>
+
     </section>
 
   </main>
