@@ -725,3 +725,96 @@ input[type="file"] {
   height: 100vh;
   object-fit: cover;
 }
+
+/* =====================================
+   CORRECCIÓN DE CONTRASTE EN TELEVISIONES
+===================================== */
+
+.screens-card {
+  background: #ffffff;
+  color: #172033;
+}
+
+.screens-card h1,
+.screens-card h2,
+.screens-card h3,
+.screens-card strong {
+  color: #172033;
+}
+
+.screens-card p {
+  color: #667085;
+}
+
+.screens-card label {
+  color: #344054;
+  font-weight: 600;
+}
+
+.screens-card input,
+.screens-card select {
+  color: #172033;
+  background: #ffffff;
+  border: 1px solid #d0d5dd;
+}
+
+.screens-card input::placeholder {
+  color: #98a2b3;
+}
+
+/* Datos de la TV seleccionada */
+
+.screen-details {
+  background: #f2f4f7;
+  border: 1px solid #e4e7ec;
+  color: #172033;
+}
+
+.screen-details strong {
+  color: #172033;
+  font-size: 18px;
+}
+
+.screen-details p {
+  color: #475467;
+}
+
+.screen-details .screen-url {
+  color: #344054;
+  font-family: monospace;
+  word-break: break-all;
+}
+
+/* Botón copiar enlace */
+
+.screen-selector-grid .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 12px 18px;
+  background: #ffffff;
+  border: 1px solid #ff9f00;
+  border-radius: 10px;
+  color: #172033;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.screen-selector-grid .btn-secondary:hover {
+  background: #fff4df;
+}
+
+/* Mensajes */
+
+.screens-card .status-message {
+  color: #667085;
+}
+
+.screens-card .status-success {
+  color: #00a83b;
+}
+
+.screens-card .status-error {
+  color: #c62828;
+}
