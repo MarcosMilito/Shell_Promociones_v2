@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/tv/:codigo",
+      "destination": "/pantalla.html"
+    },
+    {
       "source": "/h/:slug",
       "destination": "/pantalla.html"
     },

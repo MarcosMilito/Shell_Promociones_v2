@@ -2,9 +2,15 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Promociones</title>
-  <link rel="stylesheet" href="styles.css">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Panel de promociones</title>
+
+  <link rel="stylesheet" href="/styles.css">
 </head>
 
 <body class="admin-body">
@@ -12,101 +18,224 @@
   <main class="admin-layout">
 
     <section id="loginBox" class="login-card">
-      <div class="login-badge">PANTALLAS DIGITALES</div>
+
+      <div class="login-badge">
+        PANTALLAS DIGITALES
+      </div>
 
       <h1>Ingresar al panel</h1>
-      <p>Administrá las promociones de tu estación desde un solo lugar.</p>
+
+      <p>
+        Administrá las televisiones y promociones de tu estación.
+      </p>
 
       <label for="email">Email</label>
-      <input type="email" id="email" placeholder="ejemplo@estacion.com" autocomplete="email">
+
+      <input
+        type="email"
+        id="email"
+        placeholder="ejemplo@estacion.com"
+        autocomplete="email"
+      >
 
       <label for="password">Contraseña</label>
-      <input type="password" id="password" placeholder="Ingresá tu contraseña" autocomplete="current-password">
+
+      <input
+        type="password"
+        id="password"
+        placeholder="Ingresá tu contraseña"
+        autocomplete="current-password"
+      >
 
       <button id="btnLogin" class="btn-primary">
         Iniciar sesión
       </button>
 
       <p id="loginStatus" class="status-message"></p>
+
     </section>
 
     <section id="adminBox" class="dashboard hidden">
 
       <header class="dashboard-header">
+
         <div>
-          <span class="section-label">Panel administrador</span>
-          <h1 id="tituloEstacion">Promociones</h1>
-          <p>Subí imágenes o videos para pantallas horizontales y verticales.</p>
+          <span class="section-label">
+            Panel administrador
+          </span>
+
+          <h1 id="tituloEstacion">
+            Promociones
+          </h1>
+
+          <p>
+            Administrá diferentes contenidos para cada televisión.
+          </p>
         </div>
 
         <button id="btnLogout" class="btn-secondary small">
           Cerrar sesión
         </button>
+
       </header>
 
-      <section class="links-card">
-        <div>
-          <h2>Links de pantalla</h2>
-          <p>Usá estos enlaces en las TVs de la estación.</p>
+      <section class="screens-card">
+
+        <div class="promos-header">
+
+          <div>
+            <span class="section-label">
+              Televisiones
+            </span>
+
+            <h2>Crear una nueva televisión</h2>
+
+            <p>
+              Cada televisión tendrá su propio enlace y carrusel.
+            </p>
+          </div>
+
         </div>
 
-        <div class="links-grid">
-          <button id="btnCopiarHorizontal" class="btn-link-copy">
-            Copiar link horizontal
+        <div class="screen-form-grid">
+
+          <div>
+            <label for="nombrePantalla">
+              Nombre de la televisión
+            </label>
+
+            <input
+              type="text"
+              id="nombrePantalla"
+              placeholder="Ejemplo: TV surtidores"
+            >
+          </div>
+
+          <div>
+            <label for="orientacionPantalla">
+              Orientación
+            </label>
+
+            <select id="orientacionPantalla">
+              <option value="horizontal">
+                Horizontal
+              </option>
+
+              <option value="vertical">
+                Vertical
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label for="duracionPantalla">
+              Segundos por imagen
+            </label>
+
+            <input
+              type="number"
+              id="duracionPantalla"
+              min="3"
+              max="60"
+              value="7"
+            >
+          </div>
+
+          <div class="screen-create-action">
+            <button id="btnCrearPantalla" class="btn-primary">
+              Crear televisión
+            </button>
+          </div>
+
+        </div>
+
+        <p id="pantallaStatus" class="status-message"></p>
+
+      </section>
+
+      <section class="screens-card">
+
+        <div class="promos-header">
+
+          <div>
+            <span class="section-label">
+              Televisión seleccionada
+            </span>
+
+            <h2>Elegí qué televisión administrar</h2>
+          </div>
+
+        </div>
+
+        <div class="screen-selector-grid">
+
+          <div>
+            <label for="selectorPantalla">
+              Televisión
+            </label>
+
+            <select id="selectorPantalla">
+              <option value="">
+                No hay televisiones creadas
+              </option>
+            </select>
+          </div>
+
+          <button id="btnCopiarLink" class="btn-secondary">
+            Copiar enlace
           </button>
 
-          <button id="btnCopiarVertical" class="btn-link-copy">
-            Copiar link vertical
+          <button id="btnEliminarPantalla" class="btn-danger">
+            Eliminar televisión
           </button>
+
         </div>
+
+        <div id="datosPantalla" class="screen-details hidden"></div>
+
       </section>
 
       <section class="upload-card">
+
         <div class="upload-header">
+
           <div>
-            <span class="section-label">Nueva promoción</span>
-            <h2>Cargar contenido</h2>
+            <span class="section-label">
+              Nueva promoción
+            </span>
+
+            <h2>Cargar imagen o video</h2>
+
+            <p id="textoOrientacion">
+              Primero seleccioná una televisión.
+            </p>
           </div>
-          <span class="upload-note">JPG, PNG, WEBP, MP4</span>
+
+          <span class="upload-note">
+            JPG, PNG o MP4
+          </span>
+
         </div>
 
-        <div class="upload-grid">
+        <label for="archivoPromo" class="file-label">
+          Seleccionar archivo
+        </label>
 
-          <div class="upload-option">
-            <div class="orientation-tag horizontal-tag">Horizontal</div>
-            <h3>TV horizontal</h3>
-            <p>Formato recomendado: 1920 x 1080</p>
+        <input
+          type="file"
+          id="archivoPromo"
+          accept="image/jpeg,image/png,video/mp4"
+        >
 
-            <label for="archivoHorizontal" class="file-label">
-              Seleccionar imagen o video horizontal
-            </label>
-
-            <input type="file" id="archivoHorizontal" accept="image/*,video/*">
-
-            <div id="previewHorizontal" class="file-preview empty-preview">
-              Sin archivo horizontal
-            </div>
-          </div>
-
-          <div class="upload-option">
-            <div class="orientation-tag vertical-tag">Vertical</div>
-            <h3>TV vertical</h3>
-            <p>Formato recomendado: 1080 x 1920</p>
-
-            <label for="archivoVertical" class="file-label">
-              Seleccionar imagen o video vertical
-            </label>
-
-            <input type="file" id="archivoVertical" accept="image/*,video/*">
-
-            <div id="previewVertical" class="file-preview vertical empty-preview">
-              Sin archivo vertical
-            </div>
-          </div>
-
+        <div
+          id="previewPromo"
+          class="file-preview empty-preview"
+        >
+          Sin archivo seleccionado
         </div>
 
         <div class="upload-actions">
+
           <button id="btnSubir" class="btn-primary">
             Guardar promoción
           </button>
@@ -114,35 +243,40 @@
           <button id="btnLimpiar" class="btn-secondary">
             Limpiar selección
           </button>
+
         </div>
 
-        <p class="help">
-          Si cargás solo archivo horizontal, esa promoción aparecerá únicamente en pantallas horizontales.
-          Si cargás solo archivo vertical, aparecerá únicamente en pantallas verticales.
-        </p>
-
         <p id="uploadStatus" class="status-message"></p>
+
       </section>
 
       <section class="promos-section">
+
         <div class="promos-header">
+
           <div>
-            <span class="section-label">Contenido cargado</span>
-            <h2>Promociones activas e inactivas</h2>
+            <span class="section-label">
+              Contenido de la televisión
+            </span>
+
+            <h2>Promociones cargadas</h2>
           </div>
 
           <button id="btnRefrescar" class="btn-secondary small">
             Actualizar lista
           </button>
+
         </div>
 
         <div id="listaPromos" class="promos-list"></div>
+
       </section>
 
     </section>
 
   </main>
 
-  <script type="module" src="admin.js"></script>
+  <script type="module" src="/admin.js"></script>
+
 </body>
 </html>
