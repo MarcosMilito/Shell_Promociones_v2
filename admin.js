@@ -1,5 +1,9 @@
 import { supabase } from "./supabase-config.js";
 
+/* =====================================================
+   ELEMENTOS DEL HTML
+===================================================== */
+
 const loginBox = document.getElementById("loginBox");
 const adminBox = document.getElementById("adminBox");
 
@@ -12,67 +16,203 @@ const btnLogout = document.getElementById("btnLogout");
 const tituloEstacion = document.getElementById("tituloEstacion");
 
 const nombrePantalla = document.getElementById("nombrePantalla");
-const orientacionPantalla = document.getElementById("orientacionPantalla");
-const duracionPantalla = document.getElementById("duracionPantalla");
+const orientacionPantalla =
+  document.getElementById("orientacionPantalla");
+const duracionPantalla =
+  document.getElementById("duracionPantalla");
 
-const btnCrearPantalla = document.getElementById("btnCrearPantalla");
-const selectorPantalla = document.getElementById("selectorPantalla");
+const btnCrearPantalla =
+  document.getElementById("btnCrearPantalla");
 
-const btnCopiarLink = document.getElementById("btnCopiarLink");
-const btnEliminarPantalla = document.getElementById("btnEliminarPantalla");
+const selectorPantalla =
+  document.getElementById("selectorPantalla");
 
-const datosPantalla = document.getElementById("datosPantalla");
-const textoOrientacion = document.getElementById("textoOrientacion");
+const btnCopiarLink =
+  document.getElementById("btnCopiarLink");
 
-const archivoPromo = document.getElementById("archivoPromo");
-const previewPromo = document.getElementById("previewPromo");
+const btnEliminarPantalla =
+  document.getElementById("btnEliminarPantalla");
 
-const btnSubir = document.getElementById("btnSubir");
-const btnLimpiar = document.getElementById("btnLimpiar");
-const btnRefrescar = document.getElementById("btnRefrescar");
+const datosPantalla =
+  document.getElementById("datosPantalla");
 
-const listaPromos = document.getElementById("listaPromos");
+const textoOrientacion =
+  document.getElementById("textoOrientacion");
 
-const loginStatus = document.getElementById("loginStatus");
-const pantallaStatus = document.getElementById("pantallaStatus");
-const uploadStatus = document.getElementById("uploadStatus");
+const aplicarATodas =
+  document.getElementById("aplicarATodas");
+
+const alcancePromo =
+  document.getElementById("alcancePromo");
+
+const archivoPromo =
+  document.getElementById("archivoPromo");
+
+const previewPromo =
+  document.getElementById("previewPromo");
+
+const btnSubir =
+  document.getElementById("btnSubir");
+
+const btnLimpiar =
+  document.getElementById("btnLimpiar");
+
+const btnRefrescar =
+  document.getElementById("btnRefrescar");
+
+const listaPromos =
+  document.getElementById("listaPromos");
+
+const loginStatus =
+  document.getElementById("loginStatus");
+
+const pantallaStatus =
+  document.getElementById("pantallaStatus");
+
+const uploadStatus =
+  document.getElementById("uploadStatus");
+
+/* =====================================================
+   ESTADO GENERAL
+===================================================== */
 
 let usuario = null;
 let estacion = null;
+let rolUsuario = null;
 
 let pantallas = [];
 let pantallaSeleccionada = null;
 
-btnLogin.addEventListener("click", login);
-btnLogout.addEventListener("click", logout);
+/* =====================================================
+   EVENTOS
+===================================================== */
 
-btnCrearPantalla.addEventListener("click", crearPantalla);
+if (btnLogin) {
+  btnLogin.addEventListener("click", login);
+}
 
-selectorPantalla.addEventListener("change", seleccionarPantalla);
+if (btnLogout) {
+  btnLogout.addEventListener("click", logout);
+}
 
-btnCopiarLink.addEventListener("click", copiarLinkPantalla);
-btnEliminarPantalla.addEventListener("click", eliminarPantalla);
+if (password) {
+  password.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+      login();
+    }
+  });
+}
 
-archivoPromo.addEventListener("change", mostrarPreview);
+if (btnCrearPantalla) {
+  btnCrearPantalla.addEventListener(
+    "click",
+    crearPantalla
+  );
+}
 
-btnSubir.addEventListener("click", subirPromo);
-btnLimpiar.addEventListener("click", limpiarSeleccion);
-btnRefrescar.addEventListener("click", cargarPromos);
+if (selectorPantalla) {
+  selectorPantalla.addEventListener(
+    "change",
+    seleccionarPantalla
+  );
+}
+
+if (btnCopiarLink) {
+  btnCopiarLink.addEventListener(
+    "click",
+    copiarLinkPantalla
+  );
+}
+
+if (btnEliminarPantalla) {
+  btnEliminarPantalla.addEventListener(
+    "click",
+    eliminarPantalla
+  );
+}
+
+if (archivoPromo) {
+  archivoPromo.addEventListener(
+    "change",
+    mostrarPreview
+  );
+}
+
+if (btnSubir) {
+  btnSubir.addEventListener(
+    "click",
+    subirPromo
+  );
+}
+
+if (btnLimpiar) {
+  btnLimpiar.addEventListener(
+    "click",
+    function () {
+      limpiarSeleccion();
+      setStatus(uploadStatus, "", "");
+    }
+  );
+}
+
+if (btnRefrescar) {
+  btnRefrescar.addEventListener(
+    "click",
+    cargarPromos
+  );
+}
+
+if (aplicarATodas) {
+  aplicarATodas.addEventListener(
+    "change",
+    actualizarAlcancePromo
+  );
+}
+
+/* =====================================================
+   AUTENTICACIÓN
+===================================================== */
 
 async function login() {
-  setStatus(loginStatus, "Ingresando...", "");
+  const correo = email.value.trim();
+  const clave = password.value;
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: email.value.trim(),
-    password: password.value
-  });
-
-  if (error) {
+  if (!correo || !clave) {
     setStatus(
       loginStatus,
-      "Usuario o contraseña incorrectos.",
+      "Ingresá el correo y la contraseña.",
       "error"
     );
+
+    return;
+  }
+
+  btnLogin.disabled = true;
+  btnLogin.textContent = "Ingresando...";
+
+  setStatus(
+    loginStatus,
+    "Verificando usuario...",
+    ""
+  );
+
+  const { data, error } =
+    await supabase.auth.signInWithPassword({
+      email: correo,
+      password: clave
+    });
+
+  if (error) {
+    console.error("Error de inicio de sesión:", error);
+
+    setStatus(
+      loginStatus,
+      "El correo o la contraseña son incorrectos.",
+      "error"
+    );
+
+    btnLogin.disabled = false;
+    btnLogin.textContent = "Iniciar sesión";
 
     return;
   }
@@ -80,10 +220,23 @@ async function login() {
   usuario = data.user;
 
   await cargarEstacion();
+
+  btnLogin.disabled = false;
+  btnLogin.textContent = "Iniciar sesión";
 }
 
 async function verificarSesion() {
-  const { data } = await supabase.auth.getSession();
+  const { data, error } =
+    await supabase.auth.getSession();
+
+  if (error) {
+    console.error(
+      "Error verificando la sesión:",
+      error
+    );
+
+    return;
+  }
 
   if (data.session) {
     usuario = data.session.user;
@@ -92,39 +245,13 @@ async function verificarSesion() {
   }
 }
 
-async function cargarEstacion() {
-  const { data, error } = await supabase
-    .from("estaciones")
-    .select("*")
-    .eq("user_id", usuario.id)
-    .single();
-
-  if (error || !data) {
-    setStatus(
-      loginStatus,
-      "Este usuario no tiene una estación asignada.",
-      "error"
-    );
-
-    return;
-  }
-
-  estacion = data;
-
-  loginBox.classList.add("hidden");
-  adminBox.classList.remove("hidden");
-
-  tituloEstacion.textContent =
-    `Promociones - ${estacion.nombre}`;
-
-  await cargarPantallas();
-}
-
 async function logout() {
   await supabase.auth.signOut();
 
   usuario = null;
   estacion = null;
+  rolUsuario = null;
+
   pantallas = [];
   pantallaSeleccionada = null;
 
@@ -134,8 +261,194 @@ async function logout() {
   email.value = "";
   password.value = "";
 
+  if (selectorPantalla) {
+    selectorPantalla.innerHTML = "";
+  }
+
+  if (listaPromos) {
+    listaPromos.innerHTML = "";
+  }
+
   setStatus(loginStatus, "", "");
+  setStatus(pantallaStatus, "", "");
+  setStatus(uploadStatus, "", "");
 }
+
+/* =====================================================
+   CARGAR ESTACIÓN DEL USUARIO
+===================================================== */
+
+async function cargarEstacion() {
+  setStatus(
+    loginStatus,
+    "Buscando la estación asignada...",
+    ""
+  );
+
+  /*
+    Confirmamos el usuario conectado directamente
+    desde Supabase.
+  */
+
+  const {
+    data: datosUsuario,
+    error: errorUsuario
+  } = await supabase.auth.getUser();
+
+  if (
+    errorUsuario ||
+    !datosUsuario ||
+    !datosUsuario.user
+  ) {
+    console.error(
+      "No se pudo obtener el usuario:",
+      errorUsuario
+    );
+
+    setStatus(
+      loginStatus,
+      "No se pudo verificar el usuario conectado.",
+      "error"
+    );
+
+    return;
+  }
+
+  usuario = datosUsuario.user;
+
+  console.log(
+    "Usuario conectado:",
+    usuario.email,
+    usuario.id
+  );
+
+  /*
+    Buscamos la relación en estacion_usuarios.
+  */
+
+  const {
+    data: membresias,
+    error: errorMembresia
+  } = await supabase
+    .from("estacion_usuarios")
+    .select("estacion_id, rol")
+    .eq("user_id", usuario.id)
+    .limit(1);
+
+  if (errorMembresia) {
+    console.error(
+      "Error consultando estacion_usuarios:",
+      errorMembresia
+    );
+
+    setStatus(
+      loginStatus,
+      "No se pudo consultar la estación asignada: " +
+        errorMembresia.message,
+      "error"
+    );
+
+    return;
+  }
+
+  /*
+    Si no aparece en estacion_usuarios,
+    probamos el sistema anterior con estaciones.user_id.
+    Esto mantiene funcionando al usuario original.
+  */
+
+  if (!membresias || membresias.length === 0) {
+    const {
+      data: estacionAnterior,
+      error: errorAnterior
+    } = await supabase
+      .from("estaciones")
+      .select("*")
+      .eq("user_id", usuario.id)
+      .limit(1);
+
+    if (
+      errorAnterior ||
+      !estacionAnterior ||
+      estacionAnterior.length === 0
+    ) {
+      console.error(
+        "No se encontró membresía:",
+        errorAnterior
+      );
+
+      setStatus(
+        loginStatus,
+        `El usuario ${usuario.email} no tiene una estación de servicio asignada.`,
+        "error"
+      );
+
+      return;
+    }
+
+    estacion = estacionAnterior[0];
+    rolUsuario = "admin";
+
+    mostrarPanel();
+
+    return;
+  }
+
+  const membresia = membresias[0];
+
+  rolUsuario = membresia.rol;
+
+  /*
+    Cargamos los datos completos de la estación.
+  */
+
+  const {
+    data: estacionEncontrada,
+    error: errorEstacion
+  } = await supabase
+    .from("estaciones")
+    .select("*")
+    .eq("id", membresia.estacion_id)
+    .single();
+
+  if (errorEstacion || !estacionEncontrada) {
+    console.error(
+      "Error cargando la estación:",
+      errorEstacion
+    );
+
+    setStatus(
+      loginStatus,
+      "El usuario está asignado, pero no se pudo leer la estación: " +
+        (errorEstacion
+          ? errorEstacion.message
+          : "error desconocido"),
+      "error"
+    );
+
+    return;
+  }
+
+  estacion = estacionEncontrada;
+
+  mostrarPanel();
+}
+
+async function mostrarPanel() {
+  loginBox.classList.add("hidden");
+  adminBox.classList.remove("hidden");
+
+  tituloEstacion.textContent =
+    `Promociones - ${estacion.nombre}`;
+
+  setStatus(loginStatus, "", "");
+
+  await cargarPantallas();
+}
+
+/* =====================================================
+   FUNCIONES PARA LAS TELEVISIONES
+===================================================== */
 
 function convertirEnSlug(texto) {
   return texto
@@ -147,12 +460,14 @@ function convertirEnSlug(texto) {
 }
 
 async function crearPantalla() {
-  if (!estacion) return;
+  if (!estacion) {
+    return;
+  }
 
   const nombre = nombrePantalla.value.trim();
   const orientacion = orientacionPantalla.value;
-
-  const duracion = Number(duracionPantalla.value);
+  const duracion =
+    Number(duracionPantalla.value);
 
   if (!nombre) {
     setStatus(
@@ -164,7 +479,24 @@ async function crearPantalla() {
     return;
   }
 
-  if (duracion < 3 || duracion > 60) {
+  if (
+    orientacion !== "horizontal" &&
+    orientacion !== "vertical"
+  ) {
+    setStatus(
+      pantallaStatus,
+      "Seleccioná una orientación válida.",
+      "error"
+    );
+
+    return;
+  }
+
+  if (
+    !Number.isFinite(duracion) ||
+    duracion < 3 ||
+    duracion > 60
+  ) {
     setStatus(
       pantallaStatus,
       "La duración debe estar entre 3 y 60 segundos.",
@@ -174,8 +506,20 @@ async function crearPantalla() {
     return;
   }
 
+  const nombreSlug = convertirEnSlug(nombre);
+
+  if (!nombreSlug) {
+    setStatus(
+      pantallaStatus,
+      "El nombre de la televisión no es válido.",
+      "error"
+    );
+
+    return;
+  }
+
   const codigo =
-    `${estacion.slug}-${convertirEnSlug(nombre)}`;
+    `${estacion.slug}-${nombreSlug}`;
 
   btnCrearPantalla.disabled = true;
   btnCrearPantalla.textContent = "Creando...";
@@ -184,9 +528,9 @@ async function crearPantalla() {
     .from("pantallas")
     .insert({
       estacion_id: estacion.id,
-      nombre,
-      codigo,
-      orientacion,
+      nombre: nombre,
+      codigo: codigo,
+      orientacion: orientacion,
       duracion_imagen: duracion,
       activo: true
     })
@@ -194,14 +538,23 @@ async function crearPantalla() {
     .single();
 
   btnCrearPantalla.disabled = false;
-  btnCrearPantalla.textContent = "Crear televisión";
+  btnCrearPantalla.textContent =
+    "Crear televisión";
 
   if (error) {
-    console.error(error);
+    console.error(
+      "Error creando televisión:",
+      error
+    );
 
     if (
-      error.message &&
-      error.message.toLowerCase().includes("duplicate")
+      error.code === "23505" ||
+      (
+        error.message &&
+        error.message
+          .toLowerCase()
+          .includes("duplicate")
+      )
     ) {
       setStatus(
         pantallaStatus,
@@ -211,7 +564,8 @@ async function crearPantalla() {
     } else {
       setStatus(
         pantallaStatus,
-        "No se pudo crear la televisión.",
+        "No se pudo crear la televisión: " +
+          error.message,
         "error"
       );
     }
@@ -231,8 +585,12 @@ async function crearPantalla() {
   await cargarPantallas(data.id);
 }
 
-async function cargarPantallas(seleccionarId = null) {
-  if (!estacion) return;
+async function cargarPantallas(
+  seleccionarId = null
+) {
+  if (!estacion) {
+    return;
+  }
 
   const { data, error } = await supabase
     .from("pantallas")
@@ -243,11 +601,15 @@ async function cargarPantallas(seleccionarId = null) {
     });
 
   if (error) {
-    console.error(error);
+    console.error(
+      "Error cargando televisiones:",
+      error
+    );
 
     setStatus(
       pantallaStatus,
-      "No se pudieron cargar las televisiones.",
+      "No se pudieron cargar las televisiones: " +
+        error.message,
       "error"
     );
 
@@ -268,6 +630,7 @@ async function cargarPantallas(seleccionarId = null) {
     pantallaSeleccionada = null;
 
     actualizarDatosPantalla();
+    actualizarAlcancePromo();
 
     listaPromos.innerHTML = `
       <p class="status-message">
@@ -278,8 +641,9 @@ async function cargarPantallas(seleccionarId = null) {
     return;
   }
 
-  pantallas.forEach((pantalla) => {
-    const option = document.createElement("option");
+  pantallas.forEach(function (pantalla) {
+    const option =
+      document.createElement("option");
 
     option.value = pantalla.id;
 
@@ -289,10 +653,25 @@ async function cargarPantallas(seleccionarId = null) {
     selectorPantalla.appendChild(option);
   });
 
-  const idFinal =
-    seleccionarId ||
-    pantallaSeleccionada?.id ||
-    pantallas[0].id;
+  let idFinal = seleccionarId;
+
+  if (!idFinal && pantallaSeleccionada) {
+    const todavíaExiste =
+      pantallas.some(function (pantalla) {
+        return (
+          pantalla.id ===
+          pantallaSeleccionada.id
+        );
+      });
+
+    if (todavíaExiste) {
+      idFinal = pantallaSeleccionada.id;
+    }
+  }
+
+  if (!idFinal) {
+    idFinal = pantallas[0].id;
+  }
 
   selectorPantalla.value = idFinal;
 
@@ -303,7 +682,9 @@ function seleccionarPantalla() {
   const id = selectorPantalla.value;
 
   pantallaSeleccionada =
-    pantallas.find((pantalla) => pantalla.id === id) || null;
+    pantallas.find(function (pantalla) {
+      return pantalla.id === id;
+    }) || null;
 
   actualizarDatosPantalla();
   limpiarSeleccion();
@@ -313,7 +694,6 @@ function seleccionarPantalla() {
 function actualizarDatosPantalla() {
   if (!pantallaSeleccionada) {
     datosPantalla.classList.add("hidden");
-
     datosPantalla.innerHTML = "";
 
     textoOrientacion.textContent =
@@ -328,25 +708,31 @@ function actualizarDatosPantalla() {
   datosPantalla.classList.remove("hidden");
 
   datosPantalla.innerHTML = `
-    <strong>${pantallaSeleccionada.nombre}</strong>
+    <strong>
+      ${escaparHTML(pantallaSeleccionada.nombre)}
+    </strong>
 
     <p>
       Orientación:
-      ${pantallaSeleccionada.orientacion}
+      ${escaparHTML(
+        pantallaSeleccionada.orientacion
+      )}
     </p>
 
     <p>
       Tiempo por imagen:
-      ${pantallaSeleccionada.duracion_imagen} segundos
+      ${pantallaSeleccionada.duracion_imagen}
+      segundos
     </p>
 
     <p class="screen-url">
-      ${enlace}
+      ${escaparHTML(enlace)}
     </p>
   `;
 
   textoOrientacion.textContent =
-    pantallaSeleccionada.orientacion === "vertical"
+    pantallaSeleccionada.orientacion ===
+    "vertical"
       ? "Formato recomendado: 1080 × 1920"
       : "Formato recomendado: 1920 × 1080";
 }
@@ -366,14 +752,21 @@ async function copiarLinkPantalla() {
     `${window.location.origin}/tv/${pantallaSeleccionada.codigo}`;
 
   try {
-    await navigator.clipboard.writeText(enlace);
+    await navigator.clipboard.writeText(
+      enlace
+    );
 
     setStatus(
       pantallaStatus,
       "Enlace copiado correctamente.",
       "success"
     );
-  } catch {
+  } catch (error) {
+    console.error(
+      "No se pudo copiar el enlace:",
+      error
+    );
+
     setStatus(
       pantallaStatus,
       enlace,
@@ -383,42 +776,75 @@ async function copiarLinkPantalla() {
 }
 
 async function eliminarPantalla() {
-  if (!pantallaSeleccionada) return;
+  if (!pantallaSeleccionada) {
+    return;
+  }
 
   const confirmar = confirm(
-    `¿Querés eliminar "${pantallaSeleccionada.nombre}" y todas sus promociones?`
+    `¿Querés eliminar "${pantallaSeleccionada.nombre}" y todas sus promociones exclusivas?`
   );
 
-  if (!confirmar) return;
+  if (!confirmar) {
+    return;
+  }
 
-  const { data: promociones } = await supabase
+  btnEliminarPantalla.disabled = true;
+  btnEliminarPantalla.textContent =
+    "Eliminando...";
+
+  const {
+    data: promocionesPantalla,
+    error: errorPromociones
+  } = await supabase
     .from("promociones")
-    .select("path,path_horizontal,path_vertical")
-    .eq("pantalla_id", pantallaSeleccionada.id);
+    .select(
+      "path,path_horizontal,path_vertical"
+    )
+    .eq(
+      "pantalla_id",
+      pantallaSeleccionada.id
+    );
+
+  if (errorPromociones) {
+    console.error(
+      "No se pudieron leer los archivos:",
+      errorPromociones
+    );
+  }
 
   const archivos = [];
 
-  (promociones || []).forEach((promo) => {
-    if (promo.path_horizontal) {
-      archivos.push(promo.path_horizontal);
-    }
+  (promocionesPantalla || []).forEach(
+    function (promo) {
+      agregarArchivoUnico(
+        archivos,
+        promo.path
+      );
 
-    if (promo.path_vertical) {
-      archivos.push(promo.path_vertical);
-    }
+      agregarArchivoUnico(
+        archivos,
+        promo.path_horizontal
+      );
 
-    if (
-      promo.path &&
-      !archivos.includes(promo.path)
-    ) {
-      archivos.push(promo.path);
+      agregarArchivoUnico(
+        archivos,
+        promo.path_vertical
+      );
     }
-  });
+  );
 
   if (archivos.length > 0) {
-    await supabase.storage
-      .from("promos")
-      .remove(archivos);
+    const { error: errorStorage } =
+      await supabase.storage
+        .from("promos")
+        .remove(archivos);
+
+    if (errorStorage) {
+      console.error(
+        "Error eliminando archivos:",
+        errorStorage
+      );
+    }
   }
 
   const { error } = await supabase
@@ -426,12 +852,20 @@ async function eliminarPantalla() {
     .delete()
     .eq("id", pantallaSeleccionada.id);
 
+  btnEliminarPantalla.disabled = false;
+  btnEliminarPantalla.textContent =
+    "Eliminar televisión";
+
   if (error) {
-    console.error(error);
+    console.error(
+      "Error eliminando televisión:",
+      error
+    );
 
     setStatus(
       pantallaStatus,
-      "No se pudo eliminar la televisión.",
+      "No se pudo eliminar la televisión: " +
+        error.message,
       "error"
     );
 
@@ -442,15 +876,58 @@ async function eliminarPantalla() {
 
   setStatus(
     pantallaStatus,
-    "Televisión eliminada.",
+    "Televisión eliminada correctamente.",
     "success"
   );
 
   await cargarPantallas();
 }
 
+/* =====================================================
+   PROMOCIÓN PARA UNA TV O PARA TODAS
+===================================================== */
+
+function actualizarAlcancePromo() {
+  if (!aplicarATodas) {
+    return;
+  }
+
+  if (aplicarATodas.checked) {
+    if (alcancePromo) {
+      alcancePromo.textContent =
+        "Esta promoción se reproducirá en todos los televisores de la estación.";
+    }
+
+    if (selectorPantalla) {
+      selectorPantalla.disabled = true;
+    }
+
+    if (textoOrientacion) {
+      textoOrientacion.textContent =
+        "Para todas las TVs: usá una imagen de buena calidad y mantené textos y logos centrados.";
+    }
+  } else {
+    if (alcancePromo) {
+      alcancePromo.textContent =
+        "La promoción se cargará solamente en la televisión seleccionada.";
+    }
+
+    if (selectorPantalla) {
+      selectorPantalla.disabled = false;
+    }
+
+    actualizarDatosPantalla();
+  }
+}
+
+/* =====================================================
+   SUBIR ARCHIVOS
+===================================================== */
+
 function validarArchivo(file) {
-  if (!file) return false;
+  if (!file) {
+    return false;
+  }
 
   const formatosPermitidos = [
     "image/jpeg",
@@ -458,36 +935,76 @@ function validarArchivo(file) {
     "video/mp4"
   ];
 
-  return formatosPermitidos.includes(file.type);
+  return formatosPermitidos.includes(
+    file.type
+  );
 }
 
 function obtenerTipo(file) {
-  if (file.type.startsWith("video")) {
+  if (
+    file &&
+    file.type.startsWith("video")
+  ) {
     return "video";
   }
 
   return "imagen";
 }
 
-async function subirArchivo(file) {
-  const extension =
-    file.name.split(".").pop().toLowerCase();
+async function subirArchivo(
+  file,
+  esGlobal
+) {
+  const partesNombre =
+    file.name.split(".");
+
+  let extension =
+    partesNombre.length > 1
+      ? partesNombre.pop().toLowerCase()
+      : "";
+
+  if (!extension) {
+    extension =
+      file.type === "video/mp4"
+        ? "mp4"
+        : file.type === "image/png"
+          ? "png"
+          : "jpg";
+  }
+
+  const identificador =
+    Date.now() +
+    "-" +
+    Math.random()
+      .toString(36)
+      .substring(2, 9);
 
   const nombreArchivo =
-    `${Date.now()}.${extension}`;
+    `${identificador}.${extension}`;
+
+  const carpetaDestino = esGlobal
+    ? "todas-las-tvs"
+    : pantallaSeleccionada.codigo;
 
   const path =
-    `${estacion.slug}/${pantallaSeleccionada.codigo}/${nombreArchivo}`;
+    `${estacion.slug}/${carpetaDestino}/${nombreArchivo}`;
 
   const { error } = await supabase.storage
     .from("promos")
-    .upload(path, file);
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: false
+    });
 
   if (error) {
-    console.error(error);
+    console.error(
+      "Error subiendo archivo:",
+      error
+    );
 
     throw new Error(
-      "No se pudo subir el archivo."
+      "No se pudo subir el archivo: " +
+        error.message
     );
   }
 
@@ -497,13 +1014,21 @@ async function subirArchivo(file) {
 
   return {
     url: data.publicUrl,
-    path,
+    path: path,
     tipo: obtenerTipo(file)
   };
 }
 
 async function subirPromo() {
-  if (!pantallaSeleccionada) {
+  const esGlobal =
+    aplicarATodas
+      ? aplicarATodas.checked
+      : false;
+
+  if (
+    !esGlobal &&
+    !pantallaSeleccionada
+  ) {
     setStatus(
       uploadStatus,
       "Primero seleccioná una televisión.",
@@ -513,7 +1038,8 @@ async function subirPromo() {
     return;
   }
 
-  const file = archivoPromo.files[0];
+  const file =
+    archivoPromo.files[0];
 
   if (!file) {
     setStatus(
@@ -528,12 +1054,14 @@ async function subirPromo() {
   if (!validarArchivo(file)) {
     setStatus(
       uploadStatus,
-      "Usá únicamente JPG, PNG o MP4.",
+      "Usá únicamente imágenes JPG o PNG, o videos MP4.",
       "error"
     );
 
     return;
   }
+
+  let archivoSubido = null;
 
   try {
     btnSubir.disabled = true;
@@ -541,27 +1069,65 @@ async function subirPromo() {
 
     setStatus(
       uploadStatus,
-      "Subiendo promoción...",
+      esGlobal
+        ? "Subiendo promoción para todos los televisores..."
+        : "Subiendo promoción...",
       ""
     );
 
-    const archivo = await subirArchivo(file);
+    archivoSubido =
+      await subirArchivo(
+        file,
+        esGlobal
+      );
 
-    const { count } = await supabase
+    let consultaCantidad = supabase
       .from("promociones")
       .select("*", {
         count: "exact",
         head: true
       })
-      .eq("pantalla_id", pantallaSeleccionada.id);
+      .eq(
+        "estacion_id",
+        estacion.id
+      );
+
+    if (esGlobal) {
+      consultaCantidad =
+        consultaCantidad.is(
+          "pantalla_id",
+          null
+        );
+    } else {
+      consultaCantidad =
+        consultaCantidad.eq(
+          "pantalla_id",
+          pantallaSeleccionada.id
+        );
+    }
+
+    const {
+      count,
+      error: errorCantidad
+    } = await consultaCantidad;
+
+    if (errorCantidad) {
+      console.warn(
+        "No se pudo calcular el orden:",
+        errorCantidad
+      );
+    }
 
     const datosPromo = {
       estacion_id: estacion.id,
-      pantalla_id: pantallaSeleccionada.id,
 
-      tipo: archivo.tipo,
-      url: archivo.url,
-      path: archivo.path,
+      pantalla_id: esGlobal
+        ? null
+        : pantallaSeleccionada.id,
+
+      tipo: archivoSubido.tipo,
+      url: archivoSubido.url,
+      path: archivoSubido.path,
 
       activo: true,
       orden: (count || 0) + 1,
@@ -575,14 +1141,37 @@ async function subirPromo() {
       tipo_vertical: null
     };
 
-    if (pantallaSeleccionada.orientacion === "vertical") {
-      datosPromo.url_vertical = archivo.url;
-      datosPromo.path_vertical = archivo.path;
-      datosPromo.tipo_vertical = archivo.tipo;
-    } else {
-      datosPromo.url_horizontal = archivo.url;
-      datosPromo.path_horizontal = archivo.path;
-      datosPromo.tipo_horizontal = archivo.tipo;
+    /*
+      Las promociones globales utilizan
+      las columnas generales url, path y tipo.
+
+      Las promociones exclusivas también
+      completan las columnas de su orientación.
+    */
+
+    if (!esGlobal) {
+      if (
+        pantallaSeleccionada.orientacion ===
+        "vertical"
+      ) {
+        datosPromo.url_vertical =
+          archivoSubido.url;
+
+        datosPromo.path_vertical =
+          archivoSubido.path;
+
+        datosPromo.tipo_vertical =
+          archivoSubido.tipo;
+      } else {
+        datosPromo.url_horizontal =
+          archivoSubido.url;
+
+        datosPromo.path_horizontal =
+          archivoSubido.path;
+
+        datosPromo.tipo_horizontal =
+          archivoSubido.tipo;
+      }
     }
 
     const { error } = await supabase
@@ -590,37 +1179,69 @@ async function subirPromo() {
       .insert(datosPromo);
 
     if (error) {
-      console.error(error);
+      console.error(
+        "Error guardando promoción:",
+        error
+      );
+
+      /*
+        Eliminamos el archivo si la fila
+        no pudo guardarse.
+      */
+
+      await supabase.storage
+        .from("promos")
+        .remove([
+          archivoSubido.path
+        ]);
 
       throw new Error(
-        "El archivo subió, pero no se pudo guardar la promoción."
+        "El archivo subió, pero no se pudo guardar la promoción: " +
+          error.message
       );
     }
 
     limpiarSeleccion();
 
+    if (aplicarATodas) {
+      aplicarATodas.checked = false;
+    }
+
+    actualizarAlcancePromo();
+
     setStatus(
       uploadStatus,
-      "Promoción guardada correctamente.",
+      esGlobal
+        ? "Promoción guardada para todos los televisores."
+        : "Promoción guardada correctamente.",
       "success"
     );
 
     await cargarPromos();
 
   } catch (error) {
-    console.error(error);
+    console.error(
+      "Error subiendo promoción:",
+      error
+    );
 
     setStatus(
       uploadStatus,
-      error.message || "Error al guardar la promoción.",
+      error.message ||
+        "Ocurrió un error al guardar la promoción.",
       "error"
     );
 
   } finally {
     btnSubir.disabled = false;
-    btnSubir.textContent = "Guardar promoción";
+    btnSubir.textContent =
+      "Guardar promoción";
   }
 }
+
+/* =====================================================
+   CARGAR Y MOSTRAR PROMOCIONES
+===================================================== */
 
 async function cargarPromos() {
   if (!pantallaSeleccionada) {
@@ -639,10 +1260,17 @@ async function cargarPromos() {
     </p>
   `;
 
+  const filtro =
+    `pantalla_id.eq.${pantallaSeleccionada.id},pantalla_id.is.null`;
+
   const { data, error } = await supabase
     .from("promociones")
     .select("*")
-    .eq("pantalla_id", pantallaSeleccionada.id)
+    .eq(
+      "estacion_id",
+      estacion.id
+    )
+    .or(filtro)
     .order("orden", {
       ascending: true
     })
@@ -651,11 +1279,15 @@ async function cargarPromos() {
     });
 
   if (error) {
-    console.error(error);
+    console.error(
+      "Error cargando promociones:",
+      error
+    );
 
     listaPromos.innerHTML = `
       <p class="status-message status-error">
-        No se pudieron cargar las promociones.
+        No se pudieron cargar las promociones:
+        ${escaparHTML(error.message)}
       </p>
     `;
 
@@ -674,10 +1306,19 @@ async function cargarPromos() {
     return;
   }
 
-  data.forEach((promo) => {
-    const archivo = obtenerArchivoPromo(promo);
+  data.forEach(function (promo) {
+    const archivo =
+      obtenerArchivoPromo(promo);
 
-    const article = document.createElement("article");
+    const esGlobal =
+      promo.pantalla_id === null;
+
+    const alcance = esGlobal
+      ? "Todos los televisores"
+      : pantallaSeleccionada.nombre;
+
+    const article =
+      document.createElement("article");
 
     article.className =
       promo.activo
@@ -690,7 +1331,11 @@ async function cargarPromos() {
         <div class="promo-preview-card">
 
           <span class="preview-label">
-            ${pantallaSeleccionada.orientacion}
+            ${esGlobal
+              ? "General"
+              : escaparHTML(
+                  pantallaSeleccionada.orientacion
+                )}
           </span>
 
           <div class="promo-preview">
@@ -708,11 +1353,20 @@ async function cargarPromos() {
           </strong>
 
           <p>
-            Orden: ${promo.orden || 1}
+            Destino:
+            ${escaparHTML(alcance)}
           </p>
 
           <p>
-            Tipo: ${archivo.tipo || "archivo"}
+            Orden:
+            ${promo.orden || 1}
+          </p>
+
+          <p>
+            Tipo:
+            ${escaparHTML(
+              archivo.tipo || "archivo"
+            )}
           </p>
 
         </div>
@@ -745,70 +1399,154 @@ async function cargarPromos() {
 
   document
     .querySelectorAll("[data-toggle]")
-    .forEach((button) => {
-      button.addEventListener("click", async () => {
-        const id = button.dataset.toggle;
+    .forEach(function (button) {
+      button.addEventListener(
+        "click",
+        async function () {
+          const id =
+            button.dataset.toggle;
 
-        const promo =
-          data.find((item) => item.id === id);
+          const promo =
+            data.find(function (item) {
+              return item.id === id;
+            });
 
-        await supabase
-          .from("promociones")
-          .update({
-            activo: !promo.activo
-          })
-          .eq("id", id);
+          if (!promo) {
+            return;
+          }
 
-        await cargarPromos();
-      });
+          button.disabled = true;
+
+          const { error: errorActualizar } =
+            await supabase
+              .from("promociones")
+              .update({
+                activo: !promo.activo
+              })
+              .eq("id", id);
+
+          if (errorActualizar) {
+            console.error(
+              "Error cambiando estado:",
+              errorActualizar
+            );
+
+            setStatus(
+              uploadStatus,
+              "No se pudo cambiar el estado de la promoción.",
+              "error"
+            );
+          }
+
+          await cargarPromos();
+        }
+      );
     });
 
   document
     .querySelectorAll("[data-delete]")
-    .forEach((button) => {
-      button.addEventListener("click", async () => {
-        const confirmar = confirm(
-          "¿Querés eliminar esta promoción?"
-        );
+    .forEach(function (button) {
+      button.addEventListener(
+        "click",
+        async function () {
+          const id =
+            button.dataset.delete;
 
-        if (!confirmar) return;
+          const promo =
+            data.find(function (item) {
+              return item.id === id;
+            });
 
-        const id = button.dataset.delete;
+          if (!promo) {
+            return;
+          }
 
-        const promo =
-          data.find((item) => item.id === id);
+          const mensaje =
+            promo.pantalla_id === null
+              ? "Esta promoción aparece en todos los televisores. ¿Querés eliminarla de todos?"
+              : "¿Querés eliminar esta promoción?";
 
-        await eliminarPromo(promo);
-        await cargarPromos();
-      });
+          const confirmar =
+            confirm(mensaje);
+
+          if (!confirmar) {
+            return;
+          }
+
+          button.disabled = true;
+
+          await eliminarPromo(promo);
+          await cargarPromos();
+        }
+      );
     });
 }
 
 function obtenerArchivoPromo(promo) {
-  if (pantallaSeleccionada.orientacion === "vertical") {
+  /*
+    Una promoción general utiliza primero
+    url y tipo.
+
+    Una promoción exclusiva utiliza las
+    columnas correspondientes a la orientación.
+  */
+
+  if (promo.pantalla_id === null) {
     return {
-      url: promo.url_vertical || promo.url,
-      path: promo.path_vertical || promo.path,
-      tipo: promo.tipo_vertical || promo.tipo
+      url: promo.url,
+      path: promo.path,
+      tipo: promo.tipo
+    };
+  }
+
+  if (
+    pantallaSeleccionada &&
+    pantallaSeleccionada.orientacion ===
+      "vertical"
+  ) {
+    return {
+      url:
+        promo.url_vertical ||
+        promo.url,
+
+      path:
+        promo.path_vertical ||
+        promo.path,
+
+      tipo:
+        promo.tipo_vertical ||
+        promo.tipo
     };
   }
 
   return {
-    url: promo.url_horizontal || promo.url,
-    path: promo.path_horizontal || promo.path,
-    tipo: promo.tipo_horizontal || promo.tipo
+    url:
+      promo.url_horizontal ||
+      promo.url,
+
+    path:
+      promo.path_horizontal ||
+      promo.path,
+
+    tipo:
+      promo.tipo_horizontal ||
+      promo.tipo
   };
 }
 
 function crearVistaPrevia(archivo) {
-  if (!archivo.url) {
-    return "Sin archivo";
+  if (!archivo || !archivo.url) {
+    return `
+      <span>
+        Sin archivo
+      </span>
+    `;
   }
 
   if (archivo.tipo === "video") {
     return `
       <video
-        src="${archivo.url}"
+        src="${escaparAtributo(archivo.url)}"
         muted
         preload="metadata"
       ></video>
@@ -817,7 +1555,7 @@ function crearVistaPrevia(archivo) {
 
   return `
     <img
-      src="${archivo.url}"
+      src="${escaparAtributo(archivo.url)}"
       alt="Vista previa"
     >
   `;
@@ -826,35 +1564,71 @@ function crearVistaPrevia(archivo) {
 async function eliminarPromo(promo) {
   const archivos = [];
 
-  if (promo.path_horizontal) {
-    archivos.push(promo.path_horizontal);
-  }
+  agregarArchivoUnico(
+    archivos,
+    promo.path
+  );
 
-  if (promo.path_vertical) {
-    archivos.push(promo.path_vertical);
-  }
+  agregarArchivoUnico(
+    archivos,
+    promo.path_horizontal
+  );
 
-  if (
-    promo.path &&
-    !archivos.includes(promo.path)
-  ) {
-    archivos.push(promo.path);
-  }
+  agregarArchivoUnico(
+    archivos,
+    promo.path_vertical
+  );
 
   if (archivos.length > 0) {
-    await supabase.storage
-      .from("promos")
-      .remove(archivos);
+    const { error: errorStorage } =
+      await supabase.storage
+        .from("promos")
+        .remove(archivos);
+
+    if (errorStorage) {
+      console.error(
+        "No se pudo eliminar el archivo:",
+        errorStorage
+      );
+    }
   }
 
-  await supabase
+  const { error } = await supabase
     .from("promociones")
     .delete()
     .eq("id", promo.id);
+
+  if (error) {
+    console.error(
+      "No se pudo eliminar la promoción:",
+      error
+    );
+
+    setStatus(
+      uploadStatus,
+      "No se pudo eliminar la promoción.",
+      "error"
+    );
+
+    return;
+  }
+
+  setStatus(
+    uploadStatus,
+    promo.pantalla_id === null
+      ? "Promoción eliminada de todos los televisores."
+      : "Promoción eliminada correctamente.",
+    "success"
+  );
 }
 
+/* =====================================================
+   PREVISUALIZACIÓN
+===================================================== */
+
 function mostrarPreview() {
-  const file = archivoPromo.files[0];
+  const file =
+    archivoPromo.files[0];
 
   previewPromo.innerHTML = "";
 
@@ -862,57 +1636,145 @@ function mostrarPreview() {
     previewPromo.textContent =
       "Sin archivo seleccionado";
 
-    previewPromo.classList.add("empty-preview");
+    previewPromo.classList.add(
+      "empty-preview"
+    );
 
     return;
   }
 
-  previewPromo.classList.remove("empty-preview");
+  if (!validarArchivo(file)) {
+    previewPromo.textContent =
+      "Formato no permitido";
 
-  const url = URL.createObjectURL(file);
+    previewPromo.classList.add(
+      "empty-preview"
+    );
 
-  if (file.type.startsWith("video")) {
-    const video = document.createElement("video");
+    setStatus(
+      uploadStatus,
+      "Usá únicamente JPG, PNG o MP4.",
+      "error"
+    );
+
+    return;
+  }
+
+  previewPromo.classList.remove(
+    "empty-preview"
+  );
+
+  const url =
+    URL.createObjectURL(file);
+
+  if (
+    file.type.startsWith("video")
+  ) {
+    const video =
+      document.createElement("video");
 
     video.src = url;
     video.controls = true;
     video.muted = true;
 
+    video.onloadeddata = function () {
+      URL.revokeObjectURL(url);
+    };
+
     previewPromo.appendChild(video);
   } else {
-    const image = document.createElement("img");
+    const imagen =
+      document.createElement("img");
 
-    image.src = url;
-    image.alt = "Vista previa";
+    imagen.src = url;
+    imagen.alt = "Vista previa";
 
-    previewPromo.appendChild(image);
+    imagen.onload = function () {
+      URL.revokeObjectURL(url);
+    };
+
+    previewPromo.appendChild(imagen);
   }
+
+  setStatus(uploadStatus, "", "");
 }
 
 function limpiarSeleccion() {
-  archivoPromo.value = "";
+  if (archivoPromo) {
+    archivoPromo.value = "";
+  }
 
-  previewPromo.innerHTML =
-    "Sin archivo seleccionado";
+  if (previewPromo) {
+    previewPromo.innerHTML =
+      "Sin archivo seleccionado";
 
-  previewPromo.classList.add("empty-preview");
+    previewPromo.classList.add(
+      "empty-preview"
+    );
+  }
 }
 
-function setStatus(element, message, type) {
-  element.textContent = message;
+/* =====================================================
+   FUNCIONES AUXILIARES
+===================================================== */
 
-  element.classList.remove(
+function agregarArchivoUnico(
+  lista,
+  path
+) {
+  if (
+    path &&
+    !lista.includes(path)
+  ) {
+    lista.push(path);
+  }
+}
+
+function escaparHTML(valor) {
+  return String(valor || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function escaparAtributo(valor) {
+  return escaparHTML(valor);
+}
+
+function setStatus(
+  elemento,
+  mensaje,
+  tipo
+) {
+  if (!elemento) {
+    return;
+  }
+
+  elemento.textContent = mensaje || "";
+
+  elemento.classList.remove(
     "status-success",
     "status-error"
   );
 
-  if (type === "success") {
-    element.classList.add("status-success");
+  if (tipo === "success") {
+    elemento.classList.add(
+      "status-success"
+    );
   }
 
-  if (type === "error") {
-    element.classList.add("status-error");
+  if (tipo === "error") {
+    elemento.classList.add(
+      "status-error"
+    );
   }
 }
 
+/* =====================================================
+   INICIO
+===================================================== */
+
+actualizarAlcancePromo();
 verificarSesion();
