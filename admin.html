@@ -19,17 +19,36 @@
 
     <section id="loginBox" class="login-card">
 
-      <div class="login-badge">
-        PANTALLAS DIGITALES
+      <div class="login-top-row">
+
+        <div class="login-badge">
+          PANTALLAS DIGITALES
+        </div>
+
+        <a
+          href="/"
+          class="change-station-link"
+        >
+          Cambiar estación
+        </a>
+
       </div>
 
-      <h1>Ingresar al panel</h1>
+      <span class="login-station-label">
+        Estación seleccionada
+      </span>
+
+      <h1 id="loginEstacionNombre">
+        Cargando estación...
+      </h1>
 
       <p>
-        Administrá las televisiones y promociones de tu estación.
+        Ingresá con el usuario asignado a esta estación.
       </p>
 
-      <label for="email">Email</label>
+      <label for="email">
+        Email
+      </label>
 
       <input
         type="email"
@@ -38,7 +57,9 @@
         autocomplete="email"
       >
 
-      <label for="password">Contraseña</label>
+      <label for="password">
+        Contraseña
+      </label>
 
       <input
         type="password"
@@ -47,11 +68,17 @@
         autocomplete="current-password"
       >
 
-      <button id="btnLogin" class="btn-primary">
+      <button
+        id="btnLogin"
+        class="btn-primary"
+      >
         Iniciar sesión
       </button>
 
-      <p id="loginStatus" class="status-message"></p>
+      <p
+        id="loginStatus"
+        class="status-message"
+      ></p>
 
     </section>
 
@@ -276,7 +303,7 @@
 
   </main>
 
-  <script type="module" src="/admin.js?v=7"></script>
+  <script type="module" src="/admin.js?v=8"></script>
 
 </body>
 </html>

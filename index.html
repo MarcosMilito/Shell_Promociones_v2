@@ -2,26 +2,51 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Promociones</title>
-  <link rel="stylesheet" href="styles.css">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Seleccionar estación</title>
+
+  <link rel="stylesheet" href="/styles.css">
 </head>
 
 <body class="home-body">
 
-  <main class="home">
-    <div class="login-badge">PANTALLAS DIGITALES</div>
+  <main class="station-home">
 
-    <h1>Sistema de Promociones</h1>
+    <div class="login-badge">
+      PANTALLAS DIGITALES
+    </div>
 
-    <p>
-      Plataforma para administrar imágenes y videos promocionales en estaciones de servicio.
+    <h1>Seleccioná una estación</h1>
+
+    <p class="station-home-description">
+      Elegí la estación de servicio que querés administrar.
     </p>
 
-    <a href="admin.html" class="btn">
-      Ingresar al panel
-    </a>
+    <div
+      id="listaEstaciones"
+      class="station-grid"
+    >
+      <div class="station-loading">
+        Cargando estaciones...
+      </div>
+    </div>
+
+    <p
+      id="stationStatus"
+      class="status-message"
+    ></p>
+
   </main>
+
+  <script
+    type="module"
+    src="/index.js?v=1"
+  ></script>
 
 </body>
 </html>

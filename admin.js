@@ -72,6 +72,20 @@ const pantallaStatus =
 const uploadStatus =
   document.getElementById("uploadStatus");
 
+const loginEstacionNombre =
+  document.getElementById(
+    "loginEstacionNombre"
+  );
+
+const parametrosURL =
+  new URLSearchParams(
+    window.location.search
+  );
+
+const estacionSlugSeleccionada =
+  parametrosURL.get("estacion");
+
+let estacionPublicaSeleccionada = null;
 /* =====================================================
    ESTADO GENERAL
 ===================================================== */
@@ -172,6 +186,61 @@ if (aplicarATodas) {
 /* =====================================================
    AUTENTICACIÓN
 ===================================================== */
+
+async function prepararEstacionSeleccionada() {
+  if (!estacionSlugSeleccionada) {
+    window.location.replace("/");
+    return false;
+  }
+
+  const { data, error } = await supabase.rpc(
+    "listar_estaciones_publicas"
+  );
+
+  if (error) {
+    console.error(
+      "Error buscando estación:",
+      error
+    );
+
+    setStatus(
+      loginStatus,
+      "No se pudo cargar la estación seleccionada.",
+      "error"
+    );
+
+    return false;
+  }
+
+  estacionPublicaSeleccionada =
+    (data || []).find(function (item) {
+      return (
+        item.slug ===
+        estacionSlugSeleccionada
+      );
+    }) || null;
+
+  if (!estacionPublicaSeleccionada) {
+    setStatus(
+      loginStatus,
+      "La estación seleccionada no existe o no está activa.",
+      "error"
+    );
+
+    loginEstacionNombre.textContent =
+      "Estación no disponible";
+
+    return false;
+  }
+
+  loginEstacionNombre.textContent =
+    estacionPublicaSeleccionada.nombre;
+
+  document.title =
+    `Ingresar - ${estacionPublicaSeleccionada.nombre}`;
+
+  return true;
+}
 
 async function login() {
   const correo = email.value.trim();
@@ -281,14 +350,9 @@ async function logout() {
 async function cargarEstacion() {
   setStatus(
     loginStatus,
-    "Buscando la estación asignada...",
+    "Verificando acceso a la estación...",
     ""
   );
-
-  /*
-    Confirmamos el usuario conectado directamente
-    desde Supabase.
-  */
 
   const {
     data: datosUsuario,
@@ -301,7 +365,7 @@ async function cargarEstacion() {
     !datosUsuario.user
   ) {
     console.error(
-      "No se pudo obtener el usuario:",
+      "Error obteniendo usuario:",
       errorUsuario
     );
 
@@ -316,90 +380,57 @@ async function cargarEstacion() {
 
   usuario = datosUsuario.user;
 
-  console.log(
-    "Usuario conectado:",
-    usuario.email,
-    usuario.id
-  );
-
   /*
-    Buscamos la relación en estacion_usuarios.
+    Obtenemos todas las estaciones asociadas
+    al usuario conectado.
   */
 
   const {
     data: membresias,
-    error: errorMembresia
+    error: errorMembresias
   } = await supabase
     .from("estacion_usuarios")
     .select("estacion_id, rol")
-    .eq("user_id", usuario.id)
-    .limit(1);
+    .eq("user_id", usuario.id);
 
-  if (errorMembresia) {
+  if (errorMembresias) {
     console.error(
-      "Error consultando estacion_usuarios:",
-      errorMembresia
+      "Error consultando asignaciones:",
+      errorMembresias
     );
 
     setStatus(
       loginStatus,
-      "No se pudo consultar la estación asignada: " +
-        errorMembresia.message,
+      "No se pudo consultar la estación asignada.",
       "error"
     );
 
     return;
   }
 
-  /*
-    Si no aparece en estacion_usuarios,
-    probamos el sistema anterior con estaciones.user_id.
-    Esto mantiene funcionando al usuario original.
-  */
+  if (
+    !membresias ||
+    membresias.length === 0
+  ) {
+    await supabase.auth.signOut();
 
-  if (!membresias || membresias.length === 0) {
-    const {
-      data: estacionAnterior,
-      error: errorAnterior
-    } = await supabase
-      .from("estaciones")
-      .select("*")
-      .eq("user_id", usuario.id)
-      .limit(1);
-
-    if (
-      errorAnterior ||
-      !estacionAnterior ||
-      estacionAnterior.length === 0
-    ) {
-      console.error(
-        "No se encontró membresía:",
-        errorAnterior
-      );
-
-      setStatus(
-        loginStatus,
-        `El usuario ${usuario.email} no tiene una estación de servicio asignada.`,
-        "error"
-      );
-
-      return;
-    }
-
-    estacion = estacionAnterior[0];
-    rolUsuario = "admin";
-
-    mostrarPanel();
+    setStatus(
+      loginStatus,
+      `El usuario ${usuario.email} no tiene una estación asignada.`,
+      "error"
+    );
 
     return;
   }
 
-  const membresia = membresias[0];
-
-  rolUsuario = membresia.rol;
+  const idsPermitidos =
+    membresias.map(function (membresia) {
+      return membresia.estacion_id;
+    });
 
   /*
-    Cargamos los datos completos de la estación.
+    Buscamos la estación seleccionada,
+    pero solamente dentro de las permitidas.
   */
 
   const {
@@ -408,28 +439,54 @@ async function cargarEstacion() {
   } = await supabase
     .from("estaciones")
     .select("*")
-    .eq("id", membresia.estacion_id)
-    .single();
+    .eq(
+      "slug",
+      estacionSlugSeleccionada
+    )
+    .in("id", idsPermitidos)
+    .maybeSingle();
 
-  if (errorEstacion || !estacionEncontrada) {
+  if (
+    errorEstacion ||
+    !estacionEncontrada
+  ) {
     console.error(
-      "Error cargando la estación:",
+      "Acceso denegado a estación:",
       errorEstacion
     );
 
+    const nombreEstacion =
+      estacionPublicaSeleccionada
+        ? estacionPublicaSeleccionada.nombre
+        : estacionSlugSeleccionada;
+
+    await supabase.auth.signOut();
+
+    usuario = null;
+
     setStatus(
       loginStatus,
-      "El usuario está asignado, pero no se pudo leer la estación: " +
-        (errorEstacion
-          ? errorEstacion.message
-          : "error desconocido"),
+      `Este usuario no tiene acceso a ${nombreEstacion}.`,
       "error"
     );
 
     return;
   }
 
+  const membresiaEncontrada =
+    membresias.find(function (membresia) {
+      return (
+        membresia.estacion_id ===
+        estacionEncontrada.id
+      );
+    });
+
   estacion = estacionEncontrada;
+
+  rolUsuario =
+    membresiaEncontrada
+      ? membresiaEncontrada.rol
+      : "editor";
 
   mostrarPanel();
 }
@@ -1776,5 +1833,17 @@ function setStatus(
    INICIO
 ===================================================== */
 
-actualizarAlcancePromo();
-verificarSesion();
+async function iniciarAdministrador() {
+  const estacionValida =
+    await prepararEstacionSeleccionada();
+
+  if (!estacionValida) {
+    return;
+  }
+
+  actualizarAlcancePromo();
+
+  await verificarSesion();
+}
+
+iniciarAdministrador();
