@@ -381,77 +381,30 @@ async function cargarEstacion() {
   usuario = datosUsuario.user;
 
   /*
-    Obtenemos todas las estaciones asociadas
-    al usuario conectado.
+    Esta consulta funciona tanto para usuarios
+    normales como para el administrador global.
+
+    La interfaz no necesita saber qué tipo de
+    usuario es Marcos.
   */
 
   const {
-    data: membresias,
-    error: errorMembresias
-  } = await supabase
-    .from("estacion_usuarios")
-    .select("estacion_id, rol")
-    .eq("user_id", usuario.id);
-
-  if (errorMembresias) {
-    console.error(
-      "Error consultando asignaciones:",
-      errorMembresias
-    );
-
-    setStatus(
-      loginStatus,
-      "No se pudo consultar la estación asignada.",
-      "error"
-    );
-
-    return;
-  }
-
-  if (
-    !membresias ||
-    membresias.length === 0
-  ) {
-    await supabase.auth.signOut();
-
-    setStatus(
-      loginStatus,
-      `El usuario ${usuario.email} no tiene una estación asignada.`,
-      "error"
-    );
-
-    return;
-  }
-
-  const idsPermitidos =
-    membresias.map(function (membresia) {
-      return membresia.estacion_id;
-    });
-
-  /*
-    Buscamos la estación seleccionada,
-    pero solamente dentro de las permitidas.
-  */
-
-  const {
-    data: estacionEncontrada,
+    data: estacionesAutorizadas,
     error: errorEstacion
-  } = await supabase
-    .from("estaciones")
-    .select("*")
-    .eq(
-      "slug",
-      estacionSlugSeleccionada
-    )
-    .in("id", idsPermitidos)
-    .maybeSingle();
+  } = await supabase.rpc(
+    "obtener_estacion_autorizada",
+    {
+      p_slug: estacionSlugSeleccionada
+    }
+  );
 
   if (
     errorEstacion ||
-    !estacionEncontrada
+    !estacionesAutorizadas ||
+    estacionesAutorizadas.length === 0
   ) {
     console.error(
-      "Acceso denegado a estación:",
+      "Acceso denegado:",
       errorEstacion
     );
 
@@ -473,20 +426,26 @@ async function cargarEstacion() {
     return;
   }
 
-  const membresiaEncontrada =
-    membresias.find(function (membresia) {
-      return (
-        membresia.estacion_id ===
-        estacionEncontrada.id
-      );
-    });
+  estacion = estacionesAutorizadas[0];
 
-  estacion = estacionEncontrada;
+  /*
+    En usuarios normales recuperamos su rol.
+    Marcos no necesita aparecer en estacion_usuarios.
+  */
+
+  const {
+    data: membresia
+  } = await supabase
+    .from("estacion_usuarios")
+    .select("rol")
+    .eq("user_id", usuario.id)
+    .eq("estacion_id", estacion.id)
+    .maybeSingle();
 
   rolUsuario =
-    membresiaEncontrada
-      ? membresiaEncontrada.rol
-      : "editor";
+    membresia && membresia.rol
+      ? membresia.rol
+      : "admin";
 
   mostrarPanel();
 }
