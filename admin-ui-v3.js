@@ -32,6 +32,18 @@ const statusElements = [
   document.getElementById("uploadStatus")
 ].filter(Boolean);
 
+/*
+  Cerramos el formulario al iniciar. Durante los primeros milisegundos
+  el selector todavía está vacío porque admin.js está consultando Supabase.
+  Sin esta protección, el formulario podía abrirse antes de que aparecieran
+  las televisiones y quedaba abierto después.
+*/
+let primeraRenderizacion = true;
+
+if (createTvPanel) {
+  createTvPanel.removeAttribute("open");
+}
+
 function getValidOptions() {
   if (!selectorPantalla) return [];
 
@@ -59,6 +71,11 @@ function renderTvCards() {
   const selectedId = selectorPantalla.value;
 
   tvCards.innerHTML = "";
+
+  if (primeraRenderizacion) {
+    createTvPanel?.removeAttribute("open");
+    primeraRenderizacion = false;
+  }
 
   if (options.length === 0) {
     emptyScreensState?.classList.remove("hidden");
