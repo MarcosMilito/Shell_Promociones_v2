@@ -908,3 +908,76 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* =====================================================
+   V6 - FORMULARIO A TODO EL ANCHO Y TARJETAS A LA IZQUIERDA
+   El formulario de nueva TV ocupa todo el ancho útil del
+   recuadro principal. Las tarjetas se ordenan desde la
+   izquierda y se agregan en filas a medida que se crean TVs.
+===================================================== */
+
+/* El encabezado y el formulario usan todo el ancho disponible. */
+.guided-section-heading {
+  width: 100%;
+}
+
+.create-tv-content {
+  width: 100%;
+  max-width: none;
+  margin: 22px 0 0;
+  padding: 26px 28px;
+  box-sizing: border-box;
+}
+
+/* Distribución amplia de los cuatro controles dentro del formulario. */
+.create-tv-content .screen-form-grid {
+  width: 100%;
+  grid-template-columns:
+    minmax(260px, 2fr)
+    minmax(180px, 1fr)
+    minmax(180px, 1fr)
+    minmax(210px, 0.9fr);
+  gap: 18px;
+}
+
+/* Las tarjetas comienzan desde la izquierda y se van sumando. */
+.tv-card-grid {
+  width: 100%;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 360px));
+  justify-content: start;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.tv-card {
+  width: 100%;
+  max-width: 360px;
+}
+
+@media (max-width: 980px) {
+  .create-tv-content .screen-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tv-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+
+  .tv-card {
+    max-width: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .create-tv-content {
+    padding: 20px;
+  }
+
+  .create-tv-content .screen-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tv-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
