@@ -6,7 +6,7 @@
   <title>Panel de promociones</title>
 
   <link rel="stylesheet" href="/styles.css">
-  <link rel="stylesheet" href="/panel-redesign.css?v=4">
+  <link rel="stylesheet" href="/panel-redesign.css?v=5">
 </head>
 
 <body class="admin-body">
@@ -124,7 +124,7 @@
 
             <div class="create-tv-content">
               <div class="screen-form-grid">
-                <div>
+                <div class="tv-form-field">
                   <label for="nombrePantalla">Nombre de la televisión</label>
                   <input
                     type="text"
@@ -134,15 +134,16 @@
                   <small class="field-help">Usá un nombre fácil de reconocer.</small>
                 </div>
 
-                <div>
+                <div class="tv-form-field">
                   <label for="orientacionPantalla">Orientación</label>
                   <select id="orientacionPantalla">
                     <option value="horizontal">Horizontal</option>
                     <option value="vertical">Vertical</option>
                   </select>
+                  <small class="field-help field-help-placeholder" aria-hidden="true">Espacio</small>
                 </div>
 
-                <div>
+                <div class="tv-form-field">
                   <label for="duracionPantalla">Segundos por imagen</label>
                   <input
                     type="number"
@@ -151,6 +152,7 @@
                     max="60"
                     value="7"
                   >
+                  <small class="field-help field-help-placeholder" aria-hidden="true">Espacio</small>
                 </div>
 
                 <div class="screen-create-action">

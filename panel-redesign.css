@@ -794,3 +794,117 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* =====================================================
+   V5 - ALINEACIÓN Y CENTRADO DEL FORMULARIO DE TV
+   Iguala labels, campos y botón; centra el formulario
+   y las tarjetas cuando hay pocas televisiones.
+===================================================== */
+
+.create-tv-content {
+  width: min(100%, 1080px);
+  margin: 22px auto 0;
+  padding: 26px 28px;
+}
+
+.create-tv-content .screen-form-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns:
+    minmax(260px, 1.7fr)
+    minmax(180px, 0.9fr)
+    minmax(180px, 0.9fr)
+    minmax(200px, auto);
+  gap: 16px;
+  align-items: start;
+}
+
+.create-tv-content .tv-form-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.create-tv-content .tv-form-field label {
+  min-height: 20px;
+  margin: 0 0 8px;
+  line-height: 20px;
+}
+
+.create-tv-content .tv-form-field input,
+.create-tv-content .tv-form-field select {
+  width: 100%;
+  height: 50px;
+  min-height: 50px;
+  margin: 0;
+  padding: 0 14px;
+  line-height: 50px;
+}
+
+.create-tv-content .tv-form-field select {
+  line-height: normal;
+}
+
+.create-tv-content .field-help {
+  min-height: 18px;
+  margin: 7px 0 0;
+  line-height: 18px;
+}
+
+.create-tv-content .field-help-placeholder {
+  visibility: hidden;
+  user-select: none;
+}
+
+.create-tv-content .screen-create-action {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 28px;
+}
+
+.create-tv-content .screen-create-action .btn-primary {
+  width: 100%;
+  height: 50px;
+  min-height: 50px;
+  margin: 0;
+  padding: 0 20px;
+  white-space: nowrap;
+}
+
+/* Cuando hay una sola TV, la tarjeta queda centrada en vez de pegada a la izquierda. */
+.tv-card-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 360px));
+  justify-content: center;
+  align-items: stretch;
+}
+
+@media (max-width: 980px) {
+  .create-tv-content {
+    width: 100%;
+  }
+
+  .create-tv-content .screen-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .create-tv-content {
+    padding: 20px;
+  }
+
+  .create-tv-content .screen-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .create-tv-content .screen-create-action {
+    padding-top: 0;
+  }
+
+  .tv-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
