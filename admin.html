@@ -6,7 +6,7 @@
   <title>Panel de promociones</title>
 
   <link rel="stylesheet" href="/styles.css">
-  <link rel="stylesheet" href="/panel-redesign.css?v=1">
+  <link rel="stylesheet" href="/panel-redesign.css?v=2">
 </head>
 
 <body class="admin-body">
@@ -182,7 +182,7 @@
       </section>
 
       <!-- TV SELECCIONADA -->
-      <section class="screens-card guided-card selected-tv-card">
+      <section id="selectedTvSection" class="screens-card guided-card selected-tv-card">
         <div class="guided-section-heading">
           <div>
             <span class="section-label">Televisión seleccionada</span>
@@ -201,7 +201,7 @@
       </section>
 
       <!-- CARGAR PROMOCIÓN -->
-      <section class="upload-card guided-card">
+      <section id="uploadSection" class="upload-card guided-card">
         <div class="upload-header">
           <div>
             <span class="section-label">Nueva promoción</span>
@@ -263,7 +263,7 @@
       </section>
 
       <!-- LISTA -->
-      <section class="promos-section guided-card">
+      <section id="promosSection" class="promos-section guided-card">
         <div class="promos-header">
           <div>
             <span class="section-label">Carrusel</span>
@@ -283,6 +283,6 @@
   <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
   <script type="module" src="/admin.js?v=9"></script>
-  <script type="module" src="/admin-ui.js?v=1"></script>
+  <script type="module" src="/admin-ui.js?v=2"></script>
 </body>
 </html>

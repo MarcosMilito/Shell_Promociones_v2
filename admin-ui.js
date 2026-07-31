@@ -10,6 +10,10 @@ const createTvPanel = document.getElementById("createTvPanel");
 const btnCreateFirstTv = document.getElementById("btnCreateFirstTv");
 const btnAbrirPantalla = document.getElementById("btnAbrirPantalla");
 
+const selectedTvSection = document.getElementById("selectedTvSection");
+const uploadSection = document.getElementById("uploadSection");
+const promosSection = document.getElementById("promosSection");
+
 const archivoPromo = document.getElementById("archivoPromo");
 const archivoMeta = document.getElementById("archivoMeta");
 const archivoWarning = document.getElementById("archivoWarning");
@@ -58,13 +62,26 @@ function renderTvCards() {
 
   if (options.length === 0) {
     emptyScreensState?.classList.remove("hidden");
-    createTvPanel?.setAttribute("open", "");
+
+    // El formulario permanece cerrado hasta que el usuario
+    // presione “Crear mi primera televisión”.
+    createTvPanel?.removeAttribute("open");
+
+    // Estas secciones no se pueden usar hasta crear una TV.
+    selectedTvSection?.classList.add("hidden");
+    uploadSection?.classList.add("hidden");
+    promosSection?.classList.add("hidden");
+
     updateSummary();
     updateGuide();
+    updateOpenButton();
     return;
   }
 
   emptyScreensState?.classList.add("hidden");
+  selectedTvSection?.classList.remove("hidden");
+  uploadSection?.classList.remove("hidden");
+  promosSection?.classList.remove("hidden");
 
   options.forEach(function (option) {
     const tv = parseOption(option);
