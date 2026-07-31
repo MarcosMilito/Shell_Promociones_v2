@@ -348,6 +348,30 @@ async function logout() {
 ===================================================== */
 
 async function cargarEstacion() {
+
+  /*
+    Si la cuenta es la de soporte global,
+    no mostramos el panel normal de la estación.
+  */
+
+  const {
+    data: esAdministradorGlobal,
+    error: errorAdministradorGlobal
+  } = await supabase.rpc(
+    "soporte_es_admin"
+  );
+
+  if (
+    !errorAdministradorGlobal &&
+    esAdministradorGlobal === true
+  ) {
+    window.location.replace(
+      "/soporte.html"
+    );
+
+    return;
+  }
+  
   setStatus(
     loginStatus,
     "Verificando acceso a la estación...",
