@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Centro de soporte</title>
+
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/soporte.css?v=1">
+</head>
+
+<body class="support-body">
+
+  <main class="support-shell">
+
+    <!-- LOGIN EXCLUSIVO DEL CENTRO DE SOPORTE -->
+    <section id="supportLogin" class="support-login-card">
+      <span class="support-eyebrow">PANTALLAS DIGITALES</span>
+      <h1>Centro de soporte</h1>
+      <p>Ingresá con la cuenta autorizada para revisar todas las estaciones.</p>
+
+      <label for="supportEmail">Email</label>
+      <input
+        id="supportEmail"
+        type="email"
+        autocomplete="email"
+        placeholder="tu@email.com"
+      >
+
+      <label for="supportPassword">Contraseña</label>
+      <input
+        id="supportPassword"
+        type="password"
+        autocomplete="current-password"
+        placeholder="Ingresá tu contraseña"
+      >
+
+      <button id="supportLoginButton" class="support-primary-button">
+        Iniciar sesión
+      </button>
+
+      <p id="supportLoginStatus" class="support-status"></p>
+    </section>
+
+    <!-- APLICACIÓN -->
+    <section id="supportApp" class="support-app hidden">
+
+      <header class="support-header">
+        <div>
+          <span class="support-eyebrow">CENTRO DE CONTROL</span>
+          <h1>Soporte de estaciones</h1>
+          <p>Usuarios, televisiones, promociones y diagnóstico en un solo lugar.</p>
+        </div>
+
+        <div class="support-header-actions">
+          <button id="refreshAllButton" class="support-secondary-button">
+            Actualizar
+          </button>
+
+          <button id="supportLogoutButton" class="support-secondary-button">
+            Cerrar sesión
+          </button>
+        </div>
+      </header>
+
+      <div class="support-layout">
+
+        <aside class="support-sidebar">
+          <div class="support-sidebar-header">
+            <div>
+              <span class="support-small-label">ESTACIONES</span>
+              <h2>Seleccioná una</h2>
+            </div>
+
+            <span id="stationTotalBadge" class="support-count-badge">0</span>
+          </div>
+
+          <input
+            id="stationSearch"
+            class="support-search-input"
+            type="search"
+            placeholder="Buscar estación..."
+          >
+
+          <div id="stationList" class="support-station-list">
+            <div class="support-empty-small">Cargando estaciones...</div>
+          </div>
+        </aside>
+
+        <section class="support-main">
+
+          <div id="noStationState" class="support-empty-state">
+            <div class="support-empty-icon">S</div>
+            <h2>Seleccioná una estación</h2>
+            <p>Vas a poder revisar sus usuarios, televisiones y promociones.</p>
+          </div>
+
+          <div id="stationWorkspace" class="hidden">
+
+            <section class="support-station-heading">
+              <div>
+                <span class="support-small-label">ESTACIÓN SELECCIONADA</span>
+                <h2 id="selectedStationName">—</h2>
+                <p id="selectedStationSlug">—</p>
+              </div>
+
+              <div class="support-station-actions">
+                <button id="openStationPanelButton" class="support-secondary-button">
+                  Abrir panel normal
+                </button>
+              </div>
+            </section>
+
+            <section class="support-summary-grid">
+              <article class="support-summary-card">
+                <span>Usuarios</span>
+                <strong id="summaryUsers">0</strong>
+              </article>
+
+              <article class="support-summary-card">
+                <span>Televisiones</span>
+                <strong id="summaryScreens">0</strong>
+              </article>
+
+              <article class="support-summary-card">
+                <span>Promociones</span>
+                <strong id="summaryPromos">0</strong>
+              </article>
+
+              <article class="support-summary-card">
+                <span>Problemas detectados</span>
+                <strong id="summaryIssues">0</strong>
+              </article>
+            </section>
+
+            <nav class="support-tabs" aria-label="Secciones de soporte">
+              <button class="support-tab active" data-tab="diagnostico">
+                Diagnóstico
+              </button>
+
+              <button class="support-tab" data-tab="usuarios">
+                Usuarios
+              </button>
+
+              <button class="support-tab" data-tab="televisiones">
+                Televisiones
+              </button>
+
+              <button class="support-tab" data-tab="promociones">
+                Promociones
+              </button>
+            </nav>
+
+            <!-- DIAGNÓSTICO -->
+            <section id="tab-diagnostico" class="support-tab-panel">
+              <div class="support-section-heading">
+                <div>
+                  <span class="support-small-label">REVISIÓN RÁPIDA</span>
+                  <h3>Estado actual</h3>
+                  <p>El sistema detecta configuraciones que pueden dejar una pantalla sin contenido.</p>
+                </div>
+              </div>
+
+              <div id="diagnosticList" class="support-diagnostic-list"></div>
+            </section>
+
+            <!-- USUARIOS -->
+            <section id="tab-usuarios" class="support-tab-panel hidden">
+              <div class="support-section-heading">
+                <div>
+                  <span class="support-small-label">ACCESOS</span>
+                  <h3>Usuarios de la estación</h3>
+                  <p>Podés asociar usuarios existentes, cambiar su rol o quitarles acceso.</p>
+                </div>
+              </div>
+
+              <form id="assignUserForm" class="support-inline-form">
+                <div>
+                  <label for="assignUserEmail">Email del usuario existente</label>
+                  <input
+                    id="assignUserEmail"
+                    type="email"
+                    placeholder="usuario@email.com"
+                    required
+                  >
+                </div>
+
+                <div>
+                  <label for="assignUserRole">Rol</label>
+                  <select id="assignUserRole">
+                    <option value="editor">Editor</option>
+                    <option value="admin">Administrador</option>
+                  </select>
+                </div>
+
+                <button class="support-primary-button" type="submit">
+                  Asociar usuario
+                </button>
+              </form>
+
+              <p class="support-help">
+                Esta función asocia una cuenta que ya existe en Authentication → Users.
+                No crea contraseñas desde el navegador.
+              </p>
+
+              <div id="userList" class="support-data-list"></div>
+            </section>
+
+            <!-- TELEVISIONES -->
+            <section id="tab-televisiones" class="support-tab-panel hidden">
+              <div class="support-section-heading">
+                <div>
+                  <span class="support-small-label">PANTALLAS</span>
+                  <h3>Televisiones configuradas</h3>
+                  <p>Editá nombre, tiempo por imagen y estado. También podés abrir o copiar su enlace.</p>
+                </div>
+              </div>
+
+              <div id="screenList" class="support-screen-grid"></div>
+            </section>
+
+            <!-- PROMOCIONES -->
+            <section id="tab-promociones" class="support-tab-panel hidden">
+              <div class="support-section-heading support-section-heading-row">
+                <div>
+                  <span class="support-small-label">CONTENIDO</span>
+                  <h3>Promociones cargadas</h3>
+                  <p>Revisá archivos, destino y estado de publicación.</p>
+                </div>
+
+                <div class="support-promo-filters">
+                  <select id="promoScreenFilter">
+                    <option value="all">Todas las televisiones</option>
+                  </select>
+
+                  <input
+                    id="promoSearch"
+                    type="search"
+                    placeholder="Buscar promoción..."
+                  >
+                </div>
+              </div>
+
+              <div id="promoList" class="support-promo-grid"></div>
+            </section>
+
+          </div>
+
+        </section>
+
+      </div>
+
+      <div id="supportToast" class="support-toast" aria-live="polite"></div>
+
+    </section>
+
+  </main>
+
+  <script type="module" src="/soporte.js?v=1"></script>
+</body>
+</html>
