@@ -7,6 +7,7 @@ const selectorPantalla = document.getElementById("selectorPantalla");
 const tvCards = document.getElementById("tvCards");
 const emptyScreensState = document.getElementById("emptyScreensState");
 const createTvPanel = document.getElementById("createTvPanel");
+const btnToggleCreateTv = document.getElementById("btnToggleCreateTv");
 const btnCreateFirstTv = document.getElementById("btnCreateFirstTv");
 const btnAbrirPantalla = document.getElementById("btnAbrirPantalla");
 
@@ -40,8 +41,43 @@ const statusElements = [
 */
 let primeraRenderizacion = true;
 
-if (createTvPanel) {
-  createTvPanel.removeAttribute("open");
+closeCreateTvPanel();
+
+function openCreateTvPanel() {
+  if (!createTvPanel) return;
+
+  createTvPanel.classList.remove("hidden");
+  btnToggleCreateTv?.setAttribute("aria-expanded", "true");
+
+  if (btnToggleCreateTv) {
+    btnToggleCreateTv.textContent = "Cerrar formulario";
+  }
+
+  requestAnimationFrame(function () {
+    createTvPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    document.getElementById("nombrePantalla")?.focus();
+  });
+}
+
+function closeCreateTvPanel() {
+  if (!createTvPanel) return;
+
+  createTvPanel.classList.add("hidden");
+  btnToggleCreateTv?.setAttribute("aria-expanded", "false");
+
+  if (btnToggleCreateTv) {
+    btnToggleCreateTv.textContent = "+ Nueva televisión";
+  }
+}
+
+function toggleCreateTvPanel() {
+  if (!createTvPanel) return;
+
+  if (createTvPanel.classList.contains("hidden")) {
+    openCreateTvPanel();
+  } else {
+    closeCreateTvPanel();
+  }
 }
 
 function getValidOptions() {
@@ -73,7 +109,7 @@ function renderTvCards() {
   tvCards.innerHTML = "";
 
   if (primeraRenderizacion) {
-    createTvPanel?.removeAttribute("open");
+    closeCreateTvPanel();
     primeraRenderizacion = false;
   }
 
@@ -82,7 +118,7 @@ function renderTvCards() {
 
     // El formulario permanece cerrado hasta que el usuario
     // presione “Crear mi primera televisión”.
-    createTvPanel?.removeAttribute("open");
+    closeCreateTvPanel();
 
     // Estas secciones no se pueden usar hasta crear una TV.
     selectedTvSection?.classList.add("hidden");
@@ -358,7 +394,7 @@ function observeStatus(element) {
     showToast(message, type);
 
     if (type === "success" && /televisi[oó]n creada/i.test(message)) {
-      createTvPanel?.removeAttribute("open");
+      closeCreateTvPanel();
     }
   };
 
@@ -398,10 +434,10 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
+btnToggleCreateTv?.addEventListener("click", toggleCreateTvPanel);
+
 btnCreateFirstTv?.addEventListener("click", function () {
-  createTvPanel?.setAttribute("open", "");
-  createTvPanel?.scrollIntoView({ behavior: "smooth", block: "center" });
-  document.getElementById("nombrePantalla")?.focus();
+  openCreateTvPanel();
 });
 
 btnAbrirPantalla?.addEventListener("click", openSelectedScreen);

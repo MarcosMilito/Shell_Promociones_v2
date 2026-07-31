@@ -981,3 +981,173 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* =====================================================
+   V7 - FORMULARIO DE TV REALMENTE A TODO EL ANCHO
+   El formulario ya no vive dentro de <details>. Es un bloque
+   independiente debajo del encabezado, por eso ocupa el 100%.
+===================================================== */
+
+/* Encabezado: título a la izquierda y botón a la derecha. */
+.screens-card.guided-card > .guided-section-heading {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 24px;
+  width: 100%;
+  margin-bottom: 22px;
+}
+
+.screens-card.guided-card > .guided-section-heading > div:first-child {
+  min-width: 0;
+}
+
+.screens-card.guided-card > .guided-section-heading .create-tv-summary {
+  width: 220px;
+  max-width: 100%;
+  margin: 0;
+  align-self: start;
+  justify-self: end;
+}
+
+/* Contenedor independiente del formulario: ocupa todo el ancho útil. */
+.create-tv-panel-block {
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 22px;
+}
+
+.create-tv-panel-block.hidden {
+  display: none !important;
+}
+
+.create-tv-panel-block .create-tv-content {
+  display: block;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 26px 28px;
+  box-sizing: border-box;
+}
+
+.create-tv-panel-block .screen-form-grid {
+  display: grid;
+  width: 100% !important;
+  max-width: none !important;
+  grid-template-columns:
+    minmax(260px, 2fr)
+    minmax(180px, 1fr)
+    minmax(180px, 1fr)
+    minmax(210px, 1fr) !important;
+  gap: 18px;
+  align-items: start;
+}
+
+.create-tv-panel-block .tv-form-field,
+.create-tv-panel-block .screen-create-action {
+  min-width: 0;
+}
+
+.create-tv-panel-block .tv-form-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.create-tv-panel-block .tv-form-field label {
+  height: 20px;
+  min-height: 20px;
+  margin: 0 0 8px;
+  line-height: 20px;
+}
+
+.create-tv-panel-block .tv-form-field input,
+.create-tv-panel-block .tv-form-field select {
+  width: 100%;
+  height: 50px;
+  min-height: 50px;
+  margin: 0;
+  padding: 0 14px;
+}
+
+.create-tv-panel-block .field-help {
+  min-height: 18px;
+  margin: 7px 0 0;
+  line-height: 18px;
+}
+
+.create-tv-panel-block .field-help-placeholder {
+  visibility: hidden;
+}
+
+.create-tv-panel-block .screen-create-action {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 28px;
+}
+
+.create-tv-panel-block .screen-create-action .btn-primary {
+  width: 100%;
+  height: 50px;
+  min-height: 50px;
+  margin: 0;
+  padding: 0 20px;
+  white-space: nowrap;
+}
+
+/* Las tarjetas quedan a la izquierda y se agregan en columnas. */
+.screens-card.guided-card > .tv-card-grid {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 360px));
+  justify-content: start;
+  gap: 16px;
+}
+
+.screens-card.guided-card > .tv-card-grid .tv-card {
+  width: 100%;
+  max-width: 360px;
+}
+
+@media (max-width: 980px) {
+  .create-tv-panel-block .screen-form-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .create-tv-panel-block .screen-create-action {
+    padding-top: 28px;
+  }
+}
+
+@media (max-width: 620px) {
+  .screens-card.guided-card > .guided-section-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .screens-card.guided-card > .guided-section-heading .create-tv-summary {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .create-tv-panel-block .create-tv-content {
+    padding: 20px;
+  }
+
+  .create-tv-panel-block .screen-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .create-tv-panel-block .screen-create-action {
+    padding-top: 0;
+  }
+
+  .screens-card.guided-card > .tv-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .screens-card.guided-card > .tv-card-grid .tv-card {
+    max-width: none;
+  }
+}
