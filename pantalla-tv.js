@@ -433,12 +433,23 @@ function mostrarImagen(url) {
 
 function mostrarVideo(url) {
   var video = document.createElement("video");
+  var esVideoUnico =
+    promociones &&
+    promociones.length === 1;
 
   video.src = url;
 
   video.autoplay = true;
   video.muted = true;
   video.playsInline = true;
+  video.controls = false;
+
+  /*
+    Cuando hay un único video usamos el loop nativo.
+    Así el navegador nunca llega al estado "video terminado",
+    que en algunos televisores muestra el botón Play gris.
+  */
+  video.loop = esVideoUnico;
 
   video.setAttribute(
     "autoplay",
@@ -460,12 +471,28 @@ function mostrarVideo(url) {
     "auto"
   );
 
-  video.onended = function () {
-    siguientePromocion();
-  };
+  video.setAttribute(
+    "controlslist",
+    "nodownload nofullscreen noremoteplayback"
+  );
+
+  video.removeAttribute("controls");
+
+  if (esVideoUnico) {
+    video.setAttribute(
+      "loop",
+      "true"
+    );
+  } else {
+    video.onended = function () {
+      siguientePromocion();
+    };
+  }
 
   video.onerror = function () {
-    siguientePromocion();
+    if (!esVideoUnico) {
+      siguientePromocion();
+    }
   };
 
   slider.appendChild(video);
@@ -478,11 +505,20 @@ function mostrarVideo(url) {
       typeof reproduccion.catch === "function"
     ) {
       reproduccion.catch(function () {
-        siguientePromocion();
+        /*
+          Con varias promociones avanzamos a la siguiente.
+          Con un solo video no recreamos el elemento en bucle,
+          porque eso puede dejar visible el control nativo.
+        */
+        if (!esVideoUnico) {
+          siguientePromocion();
+        }
       });
     }
   } catch (error) {
-    siguientePromocion();
+    if (!esVideoUnico) {
+      siguientePromocion();
+    }
   }
 }
 
