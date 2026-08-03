@@ -15,6 +15,22 @@ var orientacionLegacy = "";
 
 var firmaActual = "";
 
+/*
+  Reproductor continuo para listas formadas únicamente por videos.
+
+  Cada video usa loop nativo, incluso cuando hay varios.
+  El siguiente se precarga oculto y se coloca encima antes de que
+  termine el actual. De esta manera el navegador nunca muestra
+  su estado nativo de "video terminado" ni el botón Play gris.
+*/
+
+var videoActivo = null;
+var videoPreparado = null;
+var indicePreparado = -1;
+var intervaloTransicionVideo = null;
+var temporizadorCambioVideo = null;
+var cambioVideoEnCurso = false;
+
 function obtenerParametro(nombre) {
   var query = window.location.search.substring(1);
   var partes = query.split("&");
@@ -33,12 +49,6 @@ function obtenerParametro(nombre) {
 function configurarDesdeURL() {
   var partes = window.location.pathname.split("/");
 
-  /*
-    Nuevo formato:
-
-    /tv/shell-lomas-tv-1
-  */
-
   if (
     partes.length >= 3 &&
     partes[1] === "tv" &&
@@ -47,13 +57,6 @@ function configurarDesdeURL() {
     codigoPantalla = decodeURIComponent(partes[2]);
     return;
   }
-
-  /*
-    Compatibilidad con links anteriores:
-
-    /h/shell-lomas
-    /v/shell-lomas
-  */
 
   if (
     partes.length >= 3 &&
@@ -139,6 +142,8 @@ function requestSupabase(endpoint, callback) {
 }
 
 function mostrarError(texto) {
+  detenerReproduccionActual();
+
   var debug = obtenerParametro("debug");
 
   if (debug === "1") {
@@ -260,6 +265,7 @@ function cargarPantallaLegacy() {
 }
 
 function iniciarPantalla() {
+  instalarEstilosAntiControles();
   cargarPromociones();
 
   setInterval(
@@ -318,7 +324,6 @@ function cargarPromociones() {
 
       firmaActual = nuevaFirma;
       promociones = nuevasPromociones;
-
       indice = 0;
 
       mostrarPromocion();
@@ -367,9 +372,75 @@ function obtenerArchivo(promo) {
   };
 }
 
-function mostrarPromocion() {
-  clearTimeout(temporizador);
+function todasLasPromocionesSonVideos() {
+  if (
+    !promociones ||
+    promociones.length === 0
+  ) {
+    return false;
+  }
 
+  for (var i = 0; i < promociones.length; i++) {
+    var archivo = obtenerArchivo(promociones[i]);
+
+    if (
+      archivo.tipo !== "video" ||
+      !archivo.url
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function detenerElementoVideo(video) {
+  if (!video) return;
+
+  try {
+    video.pause();
+  } catch (error) {
+    /* No interrumpimos la pantalla por este error. */
+  }
+
+  video.onended = null;
+  video.onerror = null;
+  video.onplaying = null;
+  video.oncanplay = null;
+
+  if (video.parentNode) {
+    video.parentNode.removeChild(video);
+  }
+}
+
+function detenerReproduccionActual() {
+  clearTimeout(temporizador);
+  temporizador = null;
+
+  clearInterval(intervaloTransicionVideo);
+  intervaloTransicionVideo = null;
+
+  clearTimeout(temporizadorCambioVideo);
+  temporizadorCambioVideo = null;
+
+  cambioVideoEnCurso = false;
+
+  detenerElementoVideo(videoActivo);
+
+  if (
+    videoPreparado &&
+    videoPreparado !== videoActivo
+  ) {
+    detenerElementoVideo(videoPreparado);
+  }
+
+  videoActivo = null;
+  videoPreparado = null;
+  indicePreparado = -1;
+}
+
+function mostrarPromocion() {
+  detenerReproduccionActual();
   slider.innerHTML = "";
 
   if (
@@ -387,11 +458,25 @@ function mostrarPromocion() {
     indice = 0;
   }
 
+  /*
+    Cuando todas las promociones son videos se usa un
+    reproductor doble: uno visible y otro precargado.
+  */
+
+  if (todasLasPromocionesSonVideos()) {
+    iniciarSecuenciaContinuaDeVideos();
+    return;
+  }
+
+  mostrarPromocionComun();
+}
+
+function mostrarPromocionComun() {
   var promo = promociones[indice];
   var archivo = obtenerArchivo(promo);
 
   if (!archivo.url) {
-    siguientePromocion();
+    siguientePromocionComun();
     return;
   }
 
@@ -401,11 +486,11 @@ function mostrarPromocion() {
   }
 
   if (archivo.tipo === "video") {
-    mostrarVideo(archivo.url);
+    mostrarVideoComun(archivo.url);
     return;
   }
 
-  siguientePromocion();
+  siguientePromocionComun();
 }
 
 function mostrarImagen(url) {
@@ -419,37 +504,25 @@ function mostrarImagen(url) {
       Number(pantalla.duracion_imagen) || 7;
 
     temporizador = setTimeout(
-      siguientePromocion,
+      siguientePromocionComun,
       segundos * 1000
     );
   };
 
   imagen.onerror = function () {
-    siguientePromocion();
+    siguientePromocionComun();
   };
 
   slider.appendChild(imagen);
 }
 
-function mostrarVideo(url) {
-  var video = document.createElement("video");
-  var esVideoUnico =
-    promociones &&
-    promociones.length === 1;
-
-  video.src = url;
-
+function configurarVideoBase(video) {
   video.autoplay = true;
   video.muted = true;
+  video.defaultMuted = true;
   video.playsInline = true;
   video.controls = false;
-
-  /*
-    Cuando hay un único video usamos el loop nativo.
-    Así el navegador nunca llega al estado "video terminado",
-    que en algunos televisores muestra el botón Play gris.
-  */
-  video.loop = esVideoUnico;
+  video.disablePictureInPicture = true;
 
   video.setAttribute(
     "autoplay",
@@ -467,6 +540,11 @@ function mostrarVideo(url) {
   );
 
   video.setAttribute(
+    "webkit-playsinline",
+    "true"
+  );
+
+  video.setAttribute(
     "preload",
     "auto"
   );
@@ -476,27 +554,24 @@ function mostrarVideo(url) {
     "nodownload nofullscreen noremoteplayback"
   );
 
+  video.setAttribute(
+    "tabindex",
+    "-1"
+  );
+
   video.removeAttribute("controls");
 
-  if (esVideoUnico) {
-    video.setAttribute(
-      "loop",
-      "true"
-    );
-  } else {
-    video.onended = function () {
-      siguientePromocion();
-    };
-  }
+  video.style.position = "absolute";
+  video.style.inset = "0";
+  video.style.width = "100vw";
+  video.style.height = "100vh";
+  video.style.objectFit = "fill";
+  video.style.objectPosition = "center";
+  video.style.background = "#000000";
+  video.style.pointerEvents = "none";
+}
 
-  video.onerror = function () {
-    if (!esVideoUnico) {
-      siguientePromocion();
-    }
-  };
-
-  slider.appendChild(video);
-
+function reproducirSilenciosamente(video, alFallar) {
   try {
     var reproduccion = video.play();
 
@@ -505,24 +580,56 @@ function mostrarVideo(url) {
       typeof reproduccion.catch === "function"
     ) {
       reproduccion.catch(function () {
-        /*
-          Con varias promociones avanzamos a la siguiente.
-          Con un solo video no recreamos el elemento en bucle,
-          porque eso puede dejar visible el control nativo.
-        */
-        if (!esVideoUnico) {
-          siguientePromocion();
+        if (typeof alFallar === "function") {
+          alFallar();
         }
       });
     }
   } catch (error) {
-    if (!esVideoUnico) {
-      siguientePromocion();
+    if (typeof alFallar === "function") {
+      alFallar();
     }
   }
 }
 
-function siguientePromocion() {
+function mostrarVideoComun(url) {
+  var video = document.createElement("video");
+
+  configurarVideoBase(video);
+
+  video.src = url;
+  video.loop = promociones.length === 1;
+
+  if (video.loop) {
+    video.setAttribute(
+      "loop",
+      "true"
+    );
+  } else {
+    video.onended = function () {
+      siguientePromocionComun();
+    };
+  }
+
+  video.onerror = function () {
+    if (!video.loop) {
+      siguientePromocionComun();
+    }
+  };
+
+  slider.appendChild(video);
+
+  reproducirSilenciosamente(
+    video,
+    function () {
+      if (!video.loop) {
+        siguientePromocionComun();
+      }
+    }
+  );
+}
+
+function siguientePromocionComun() {
   if (
     !promociones ||
     promociones.length === 0
@@ -537,6 +644,327 @@ function siguientePromocion() {
   }
 
   mostrarPromocion();
+}
+
+/* =====================================================
+   REPRODUCTOR CONTINUO DE VARIOS VIDEOS
+===================================================== */
+
+function crearVideoDeSecuencia(url, visible) {
+  var video = document.createElement("video");
+
+  configurarVideoBase(video);
+
+  video.src = url;
+
+  /*
+    El loop queda activo incluso si hay varios videos.
+    Así el elemento jamás entra en estado "ended" y el
+    navegador no puede mostrar el botón Play gris.
+  */
+
+  video.loop = true;
+
+  video.setAttribute(
+    "loop",
+    "true"
+  );
+
+  video.style.zIndex = visible ? "2" : "1";
+  video.style.visibility = visible
+    ? "visible"
+    : "hidden";
+  video.style.opacity = visible
+    ? "1"
+    : "0";
+
+  slider.appendChild(video);
+
+  try {
+    video.load();
+  } catch (error) {
+    /* Algunos navegadores cargan automáticamente. */
+  }
+
+  return video;
+}
+
+function iniciarSecuenciaContinuaDeVideos() {
+  var archivoActual =
+    obtenerArchivo(promociones[indice]);
+
+  videoActivo = crearVideoDeSecuencia(
+    archivoActual.url,
+    true
+  );
+
+  videoActivo.onerror = function () {
+    avanzarVideoPorError();
+  };
+
+  reproducirSilenciosamente(
+    videoActivo,
+    avanzarVideoPorError
+  );
+
+  if (promociones.length === 1) {
+    return;
+  }
+
+  prepararSiguienteVideo();
+
+  intervaloTransicionVideo = setInterval(
+    verificarMomentoDeCambio,
+    100
+  );
+}
+
+function prepararSiguienteVideo() {
+  if (
+    !promociones ||
+    promociones.length < 2 ||
+    !videoActivo
+  ) {
+    return;
+  }
+
+  if (videoPreparado) {
+    detenerElementoVideo(videoPreparado);
+    videoPreparado = null;
+  }
+
+  indicePreparado = indice + 1;
+
+  if (indicePreparado >= promociones.length) {
+    indicePreparado = 0;
+  }
+
+  var archivoSiguiente =
+    obtenerArchivo(promociones[indicePreparado]);
+
+  videoPreparado = crearVideoDeSecuencia(
+    archivoSiguiente.url,
+    false
+  );
+
+  videoPreparado.onerror = function () {
+    detenerElementoVideo(videoPreparado);
+    videoPreparado = null;
+    indicePreparado = -1;
+  };
+}
+
+function verificarMomentoDeCambio() {
+  if (
+    cambioVideoEnCurso ||
+    !videoActivo ||
+    !videoPreparado
+  ) {
+    return;
+  }
+
+  var duracion = Number(videoActivo.duration);
+  var tiempoActual = Number(videoActivo.currentTime);
+
+  if (
+    !isFinite(duracion) ||
+    duracion <= 0 ||
+    !isFinite(tiempoActual)
+  ) {
+    return;
+  }
+
+  var restante = duracion - tiempoActual;
+
+  /*
+    El siguiente video ya está descargado en memoria.
+    Iniciamos el cambio unas décimas antes del final.
+  */
+
+  if (
+    restante <= 0.30 &&
+    restante >= 0 &&
+    videoPreparado.readyState >= 2
+  ) {
+    activarVideoPreparado();
+  }
+}
+
+function activarVideoPreparado() {
+  if (
+    cambioVideoEnCurso ||
+    !videoActivo ||
+    !videoPreparado
+  ) {
+    return;
+  }
+
+  cambioVideoEnCurso = true;
+
+  var anterior = videoActivo;
+  var siguiente = videoPreparado;
+  var siguienteIndice = indicePreparado;
+  var activado = false;
+
+  function completarCambio() {
+    if (activado) return;
+
+    activado = true;
+
+    clearTimeout(temporizadorCambioVideo);
+    temporizadorCambioVideo = null;
+
+    siguiente.style.visibility = "visible";
+    siguiente.style.opacity = "1";
+    siguiente.style.zIndex = "3";
+
+    anterior.style.visibility = "hidden";
+    anterior.style.opacity = "0";
+
+    videoActivo = siguiente;
+    videoPreparado = null;
+    indicePreparado = -1;
+    indice = siguienteIndice;
+    cambioVideoEnCurso = false;
+
+    setTimeout(
+      function () {
+        detenerElementoVideo(anterior);
+
+        if (videoActivo) {
+          videoActivo.style.zIndex = "2";
+        }
+
+        prepararSiguienteVideo();
+      },
+      40
+    );
+  }
+
+  function cancelarCambio() {
+    if (activado) return;
+
+    clearTimeout(temporizadorCambioVideo);
+    temporizadorCambioVideo = null;
+
+    try {
+      siguiente.pause();
+      siguiente.currentTime = 0;
+    } catch (error) {
+      /* Conservamos el video anterior en reproducción. */
+    }
+
+    siguiente.style.visibility = "hidden";
+    siguiente.style.opacity = "0";
+    siguiente.style.zIndex = "1";
+
+    cambioVideoEnCurso = false;
+  }
+
+  siguiente.onplaying = completarCambio;
+
+  try {
+    siguiente.currentTime = 0;
+  } catch (error) {
+    /* El video igualmente intentará comenzar desde el inicio. */
+  }
+
+  try {
+    var reproduccion = siguiente.play();
+
+    if (
+      reproduccion &&
+      typeof reproduccion.then === "function"
+    ) {
+      reproduccion.then(
+        completarCambio
+      ).catch(
+        cancelarCambio
+      );
+    }
+  } catch (error) {
+    cancelarCambio();
+    return;
+  }
+
+  /*
+    El anterior continúa en loop mientras el nuevo comienza.
+    Si el ONN tarda, nunca queda visible un video terminado.
+  */
+
+  temporizadorCambioVideo = setTimeout(
+    cancelarCambio,
+    2000
+  );
+}
+
+function avanzarVideoPorError() {
+  if (
+    !promociones ||
+    promociones.length === 0
+  ) {
+    return;
+  }
+
+  indice++;
+
+  if (indice >= promociones.length) {
+    indice = 0;
+  }
+
+  mostrarPromocion();
+}
+
+/* =====================================================
+   OCULTAR CONTROLES NATIVOS DEL NAVEGADOR
+===================================================== */
+
+function instalarEstilosAntiControles() {
+  if (
+    document.getElementById(
+      "tv-anti-media-controls"
+    )
+  ) {
+    return;
+  }
+
+  var estilos = document.createElement("style");
+
+  estilos.id = "tv-anti-media-controls";
+
+  estilos.textContent =
+    "#slider video{" +
+    "pointer-events:none!important;" +
+    "-webkit-user-select:none!important;" +
+    "user-select:none!important;" +
+    "}" +
+    "#slider video::-webkit-media-controls{" +
+    "display:none!important;" +
+    "opacity:0!important;" +
+    "visibility:hidden!important;" +
+    "}" +
+    "#slider video::-webkit-media-controls-enclosure{" +
+    "display:none!important;" +
+    "opacity:0!important;" +
+    "visibility:hidden!important;" +
+    "}" +
+    "#slider video::-webkit-media-controls-panel{" +
+    "display:none!important;" +
+    "opacity:0!important;" +
+    "visibility:hidden!important;" +
+    "}" +
+    "#slider video::-webkit-media-controls-play-button{" +
+    "display:none!important;" +
+    "opacity:0!important;" +
+    "visibility:hidden!important;" +
+    "}" +
+    "#slider video::-webkit-media-controls-overlay-play-button{" +
+    "display:none!important;" +
+    "opacity:0!important;" +
+    "visibility:hidden!important;" +
+    "}";
+
+  document.head.appendChild(estilos);
 }
 
 configurarDesdeURL();
