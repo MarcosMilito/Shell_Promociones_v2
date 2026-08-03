@@ -1,5 +1,11 @@
 import { supabase } from "./supabase-config.js";
 
+import {
+  prepararArchivoParaSubida,
+  necesitaCompresion,
+  formatearBytes
+} from "./video-compressor.js?v=1";
+
 /* =====================================================
    ELEMENTOS DEL HTML
 ===================================================== */
@@ -993,7 +999,8 @@ function obtenerTipo(file) {
 
 async function subirArchivo(
   file,
-  esGlobal
+  esGlobal,
+  pantallaDestino
 ) {
   const partesNombre =
     file.name.split(".");
@@ -1024,7 +1031,7 @@ async function subirArchivo(
 
   const carpetaDestino = esGlobal
     ? "todas-las-tvs"
-    : pantallaSeleccionada.codigo;
+    : pantallaDestino.codigo;
 
   const path =
     `${estacion.slug}/${carpetaDestino}/${nombreArchivo}`;
@@ -1065,9 +1072,18 @@ async function subirPromo() {
       ? aplicarATodas.checked
       : false;
 
+  /*
+    Guardamos la televisión elegida al comenzar.
+    Así el destino no cambia aunque el usuario
+    toque otra tarjeta durante un proceso largo.
+  */
+
+  const pantallaDestino =
+    pantallaSeleccionada;
+
   if (
     !esGlobal &&
-    !pantallaSeleccionada
+    !pantallaDestino
   ) {
     setStatus(
       uploadStatus,
@@ -1078,10 +1094,10 @@ async function subirPromo() {
     return;
   }
 
-  const file =
+  const archivoOriginal =
     archivoPromo.files[0];
 
-  if (!file) {
+  if (!archivoOriginal) {
     setStatus(
       uploadStatus,
       "Seleccioná una imagen o un video.",
@@ -1091,7 +1107,7 @@ async function subirPromo() {
     return;
   }
 
-  if (!validarArchivo(file)) {
+  if (!validarArchivo(archivoOriginal)) {
     setStatus(
       uploadStatus,
       "Usá únicamente imágenes JPG o PNG, o videos MP4.",
@@ -1102,23 +1118,148 @@ async function subirPromo() {
   }
 
   let archivoSubido = null;
+  let archivoParaSubir =
+    archivoOriginal;
+
+  let ultimaEtapaMostrada = "";
+
+  function bloquearSalida(event) {
+    event.preventDefault();
+    event.returnValue = "";
+  }
+
+  function bloquearControles() {
+    btnSubir.disabled = true;
+    btnLimpiar.disabled = true;
+    archivoPromo.disabled = true;
+
+    if (aplicarATodas) {
+      aplicarATodas.disabled = true;
+    }
+
+    if (selectorPantalla) {
+      selectorPantalla.disabled = true;
+    }
+  }
+
+  function restaurarControles() {
+    btnSubir.disabled = false;
+    btnLimpiar.disabled = false;
+    archivoPromo.disabled = false;
+
+    if (aplicarATodas) {
+      aplicarATodas.disabled = false;
+    }
+
+    if (selectorPantalla) {
+      selectorPantalla.disabled = Boolean(
+        aplicarATodas &&
+        aplicarATodas.checked
+      );
+    }
+  }
 
   try {
-    btnSubir.disabled = true;
-    btnSubir.textContent = "Subiendo...";
+    bloquearControles();
 
-    setStatus(
-      uploadStatus,
-      esGlobal
-        ? "Subiendo promoción para todos los televisores..."
-        : "Subiendo promoción...",
-      ""
-    );
+    if (
+      necesitaCompresion(
+        archivoOriginal
+      )
+    ) {
+      window.addEventListener(
+        "beforeunload",
+        bloquearSalida
+      );
+
+      btnSubir.textContent =
+        "Preparando video...";
+
+      setStatus(
+        uploadStatus,
+        "El video es grande. Lo estamos optimizando antes de subirlo. No cierres esta pestaña.",
+        ""
+      );
+
+      archivoParaSubir =
+        await prepararArchivoParaSubida(
+          archivoOriginal,
+          function (estado) {
+            const porcentaje =
+              Number.isFinite(
+                estado.porcentaje
+              )
+                ? Math.round(
+                    estado.porcentaje
+                  )
+                : null;
+
+            if (
+              estado.etapa ===
+              "comprimiendo"
+            ) {
+              btnSubir.textContent =
+                porcentaje === null
+                  ? "Comprimiendo..."
+                  : `Comprimiendo ${porcentaje}%`;
+
+              /*
+                No actualizamos uploadStatus en cada
+                porcentaje para evitar una lluvia de
+                notificaciones visuales.
+              */
+
+              return;
+            }
+
+            btnSubir.textContent =
+              estado.etapa === "completado"
+                ? "Subiendo..."
+                : "Procesando video...";
+
+            if (
+              estado.etapa !==
+              ultimaEtapaMostrada
+            ) {
+              ultimaEtapaMostrada =
+                estado.etapa;
+
+              setStatus(
+                uploadStatus,
+                estado.mensaje,
+                ""
+              );
+            }
+          }
+        );
+
+      setStatus(
+        uploadStatus,
+        `Video optimizado: ${formatearBytes(
+          archivoOriginal.size
+        )} → ${formatearBytes(
+          archivoParaSubir.size
+        )}. Subiendo promoción...`,
+        ""
+      );
+    } else {
+      setStatus(
+        uploadStatus,
+        esGlobal
+          ? "Subiendo promoción para todos los televisores..."
+          : "Subiendo promoción...",
+        ""
+      );
+    }
+
+    btnSubir.textContent =
+      "Subiendo...";
 
     archivoSubido =
       await subirArchivo(
-        file,
-        esGlobal
+        archivoParaSubir,
+        esGlobal,
+        pantallaDestino
       );
 
     let consultaCantidad = supabase
@@ -1142,7 +1283,7 @@ async function subirPromo() {
       consultaCantidad =
         consultaCantidad.eq(
           "pantalla_id",
-          pantallaSeleccionada.id
+          pantallaDestino.id
         );
     }
 
@@ -1163,7 +1304,7 @@ async function subirPromo() {
 
       pantalla_id: esGlobal
         ? null
-        : pantallaSeleccionada.id,
+        : pantallaDestino.id,
 
       tipo: archivoSubido.tipo,
       url: archivoSubido.url,
@@ -1191,7 +1332,7 @@ async function subirPromo() {
 
     if (!esGlobal) {
       if (
-        pantallaSeleccionada.orientacion ===
+        pantallaDestino.orientacion ===
         "vertical"
       ) {
         datosPromo.url_vertical =
@@ -1223,11 +1364,6 @@ async function subirPromo() {
         "Error guardando promoción:",
         error
       );
-
-      /*
-        Eliminamos el archivo si la fila
-        no pudo guardarse.
-      */
 
       await supabase.storage
         .from("promos")
@@ -1273,7 +1409,13 @@ async function subirPromo() {
     );
 
   } finally {
-    btnSubir.disabled = false;
+    window.removeEventListener(
+      "beforeunload",
+      bloquearSalida
+    );
+
+    restaurarControles();
+
     btnSubir.textContent =
       "Guardar promoción";
   }

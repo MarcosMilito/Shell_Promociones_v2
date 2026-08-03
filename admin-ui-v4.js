@@ -282,8 +282,23 @@ function showFileMetadata() {
     inspectImage(file);
   } else {
     archivoWarning.classList.remove("hidden");
-    archivoWarning.className = "file-warning is-ok";
-    archivoWarning.textContent = "El video se reproducirá completo antes de pasar al siguiente contenido.";
+
+    if (
+      file.size >
+      44 * 1024 * 1024
+    ) {
+      archivoWarning.className =
+        "file-warning is-warning";
+
+      archivoWarning.textContent =
+        "Este video se comprimirá automáticamente antes de subirlo. No cierres la pestaña durante el proceso.";
+    } else {
+      archivoWarning.className =
+        "file-warning is-ok";
+
+      archivoWarning.textContent =
+        "El video se reproducirá completo antes de pasar al siguiente contenido.";
+    }
   }
 
   updateGuide();
