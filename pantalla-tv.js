@@ -31,6 +31,363 @@ var intervaloTransicionVideo = null;
 var temporizadorCambioVideo = null;
 var cambioVideoEnCurso = false;
 
+var preparacionVideoEnCurso = null;
+var generacionReproduccion = 0;
+
+/*
+  Caché local persistente de promociones.
+
+  La primera vez que este ONN necesita una imagen o un video,
+  lo descarga desde Supabase, lo guarda en Cache Storage y crea
+  una URL local tipo blob:. Las siguientes vueltas reproducen
+  esa copia local y no vuelven a transferir el mismo archivo.
+
+  Si Cache Storage no está disponible o se queda sin espacio,
+  el reproductor vuelve automáticamente a la URL original.
+*/
+
+var NOMBRE_CACHE_PROMOS = "promos-tv-local-v1";
+var urlsLocales = {};
+var resolucionesEnCurso = {};
+var cacheLocalHabilitada = null;
+
+function registrarCache(mensaje, dato) {
+  if (obtenerParametro("debug") !== "1") {
+    return;
+  }
+
+  if (typeof dato !== "undefined") {
+    console.log(
+      "[Cache TV] " + mensaje,
+      dato
+    );
+  } else {
+    console.log(
+      "[Cache TV] " + mensaje
+    );
+  }
+}
+
+function navegadorAdmiteCacheLocal() {
+  if (cacheLocalHabilitada !== null) {
+    return cacheLocalHabilitada;
+  }
+
+  cacheLocalHabilitada = Boolean(
+    window.caches &&
+    window.fetch &&
+    window.Promise &&
+    window.URL &&
+    typeof window.URL.createObjectURL === "function"
+  );
+
+  return cacheLocalHabilitada;
+}
+
+function solicitarPersistenciaCache() {
+  if (
+    navigator.storage &&
+    typeof navigator.storage.persist === "function"
+  ) {
+    navigator.storage
+      .persist()
+      .then(function (concedido) {
+        registrarCache(
+          concedido
+            ? "El sistema permitió conservar la caché."
+            : "La caché puede ser eliminada por el sistema si falta espacio."
+        );
+      })
+      .catch(function () {
+        /* La persistencia es una mejora opcional. */
+      });
+  }
+}
+
+function abrirCacheLocal() {
+  if (!navegadorAdmiteCacheLocal()) {
+    return Promise.resolve(null);
+  }
+
+  return window.caches
+    .open(NOMBRE_CACHE_PROMOS)
+    .catch(function (error) {
+      registrarCache(
+        "No se pudo abrir Cache Storage.",
+        error
+      );
+
+      return null;
+    });
+}
+
+function convertirRespuestaEnURLLocal(
+  respuesta,
+  urlOriginal
+) {
+  if (!respuesta) {
+    return Promise.reject(
+      new Error("Respuesta vacía")
+    );
+  }
+
+  if (
+    respuesta.type !== "opaque" &&
+    !respuesta.ok
+  ) {
+    return Promise.reject(
+      new Error(
+        "No se pudo descargar el archivo: " +
+        respuesta.status
+      )
+    );
+  }
+
+  return respuesta
+    .blob()
+    .then(function (blob) {
+      if (!blob || blob.size === 0) {
+        throw new Error(
+          "El archivo descargado está vacío."
+        );
+      }
+
+      var urlLocal =
+        window.URL.createObjectURL(blob);
+
+      urlsLocales[urlOriginal] = urlLocal;
+
+      registrarCache(
+        "Archivo listo en almacenamiento local: " +
+        urlOriginal
+      );
+
+      return urlLocal;
+    });
+}
+
+function descargarArchivoParaCache(
+  cache,
+  url
+) {
+  return window
+    .fetch(url, {
+      method: "GET",
+      mode: "cors",
+      credentials: "omit",
+      cache: "force-cache"
+    })
+    .then(function (respuesta) {
+      if (!respuesta.ok) {
+        throw new Error(
+          "Error HTTP " + respuesta.status
+        );
+      }
+
+      if (!cache) {
+        return respuesta;
+      }
+
+      var copia = respuesta.clone();
+
+      return cache
+        .put(url, copia)
+        .then(function () {
+          registrarCache(
+            "Archivo guardado en Cache Storage: " +
+            url
+          );
+
+          return respuesta;
+        })
+        .catch(function (error) {
+          /*
+            Si la cuota local se llena, igual usamos el blob
+            durante la sesión actual.
+          */
+
+          registrarCache(
+            "No se pudo guardar de forma persistente; se usará en memoria.",
+            error
+          );
+
+          return respuesta;
+        });
+    });
+}
+
+function resolverURLLocal(url) {
+  if (!url) {
+    return Promise.resolve(url);
+  }
+
+  if (urlsLocales[url]) {
+    return Promise.resolve(
+      urlsLocales[url]
+    );
+  }
+
+  if (resolucionesEnCurso[url]) {
+    return resolucionesEnCurso[url];
+  }
+
+  if (!navegadorAdmiteCacheLocal()) {
+    return Promise.resolve(url);
+  }
+
+  var promesa = abrirCacheLocal()
+    .then(function (cache) {
+      if (!cache) {
+        return descargarArchivoParaCache(
+          null,
+          url
+        );
+      }
+
+      return cache
+        .match(url)
+        .then(function (respuestaGuardada) {
+          if (respuestaGuardada) {
+            registrarCache(
+              "Se reutiliza el archivo guardado: " +
+              url
+            );
+
+            return respuestaGuardada;
+          }
+
+          return descargarArchivoParaCache(
+            cache,
+            url
+          );
+        });
+    })
+    .then(function (respuesta) {
+      return convertirRespuestaEnURLLocal(
+        respuesta,
+        url
+      );
+    })
+    .catch(function (error) {
+      registrarCache(
+        "Se usará la URL original como respaldo.",
+        error
+      );
+
+      return url;
+    })
+    .then(function (urlResultado) {
+      delete resolucionesEnCurso[url];
+      return urlResultado;
+    });
+
+  resolucionesEnCurso[url] = promesa;
+
+  return promesa;
+}
+
+function obtenerURLsActivas(lista) {
+  var urls = [];
+
+  for (var i = 0; i < lista.length; i++) {
+    var archivo = obtenerArchivo(lista[i]);
+
+    if (
+      archivo.url &&
+      urls.indexOf(archivo.url) === -1
+    ) {
+      urls.push(archivo.url);
+    }
+  }
+
+  return urls;
+}
+
+function limpiarCacheLocal(urlsActivas) {
+  var permitidas = {};
+
+  for (var i = 0; i < urlsActivas.length; i++) {
+    permitidas[urlsActivas[i]] = true;
+  }
+
+  Object.keys(urlsLocales).forEach(
+    function (url) {
+      if (permitidas[url]) {
+        return;
+      }
+
+      try {
+        window.URL.revokeObjectURL(
+          urlsLocales[url]
+        );
+      } catch (error) {
+        /* No interrumpimos la reproducción. */
+      }
+
+      delete urlsLocales[url];
+      delete resolucionesEnCurso[url];
+    }
+  );
+
+  abrirCacheLocal().then(function (cache) {
+    if (!cache) return;
+
+    cache
+      .keys()
+      .then(function (solicitudes) {
+        var eliminaciones = [];
+
+        for (
+          var j = 0;
+          j < solicitudes.length;
+          j++
+        ) {
+          var solicitud = solicitudes[j];
+
+          if (!permitidas[solicitud.url]) {
+            eliminaciones.push(
+              cache.delete(solicitud)
+            );
+          }
+        }
+
+        return Promise.all(eliminaciones);
+      })
+      .catch(function (error) {
+        registrarCache(
+          "No se pudo limpiar la caché anterior.",
+          error
+        );
+      });
+  });
+}
+
+function precargarSiguientePromocionComun() {
+  if (
+    !promociones ||
+    promociones.length < 2
+  ) {
+    return;
+  }
+
+  var siguienteIndice = indice + 1;
+
+  if (siguienteIndice >= promociones.length) {
+    siguienteIndice = 0;
+  }
+
+  var archivoSiguiente =
+    obtenerArchivo(
+      promociones[siguienteIndice]
+    );
+
+  if (archivoSiguiente.url) {
+    resolverURLLocal(
+      archivoSiguiente.url
+    );
+  }
+}
+
 function obtenerParametro(nombre) {
   var query = window.location.search.substring(1);
   var partes = query.split("&");
@@ -266,6 +623,7 @@ function cargarPantallaLegacy() {
 
 function iniciarPantalla() {
   instalarEstilosAntiControles();
+  solicitarPersistenciaCache();
   cargarPromociones();
 
   setInterval(
@@ -325,6 +683,16 @@ function cargarPromociones() {
       firmaActual = nuevaFirma;
       promociones = nuevasPromociones;
       indice = 0;
+
+      /*
+        Conservamos únicamente los archivos que esta TV
+        sigue necesitando. Las promociones eliminadas se
+        liberan del almacenamiento local.
+      */
+
+      limpiarCacheLocal(
+        obtenerURLsActivas(promociones)
+      );
 
       mostrarPromocion();
     }
@@ -408,12 +776,27 @@ function detenerElementoVideo(video) {
   video.onplaying = null;
   video.oncanplay = null;
 
+  try {
+    video.removeAttribute("src");
+    video.load();
+  } catch (error) {
+    /* Liberación opcional de memoria del elemento. */
+  }
+
   if (video.parentNode) {
     video.parentNode.removeChild(video);
   }
 }
 
 function detenerReproduccionActual() {
+  /*
+    Invalida cualquier descarga o preparación asíncrona
+    perteneciente a la reproducción anterior.
+  */
+
+  generacionReproduccion++;
+  preparacionVideoEnCurso = null;
+
   clearTimeout(temporizador);
   temporizador = null;
 
@@ -443,6 +826,9 @@ function mostrarPromocion() {
   detenerReproduccionActual();
   slider.innerHTML = "";
 
+  var generacionActual =
+    generacionReproduccion;
+
   if (
     !promociones ||
     promociones.length === 0
@@ -464,14 +850,21 @@ function mostrarPromocion() {
   */
 
   if (todasLasPromocionesSonVideos()) {
-    iniciarSecuenciaContinuaDeVideos();
+    iniciarSecuenciaContinuaDeVideos(
+      generacionActual
+    );
+
     return;
   }
 
-  mostrarPromocionComun();
+  mostrarPromocionComun(
+    generacionActual
+  );
 }
 
-function mostrarPromocionComun() {
+function mostrarPromocionComun(
+  generacionActual
+) {
   var promo = promociones[indice];
   var archivo = obtenerArchivo(promo);
 
@@ -481,39 +874,66 @@ function mostrarPromocionComun() {
   }
 
   if (archivo.tipo === "imagen") {
-    mostrarImagen(archivo.url);
+    mostrarImagen(
+      archivo.url,
+      generacionActual
+    );
+
     return;
   }
 
   if (archivo.tipo === "video") {
-    mostrarVideoComun(archivo.url);
+    mostrarVideoComun(
+      archivo.url,
+      generacionActual
+    );
+
     return;
   }
 
   siguientePromocionComun();
 }
 
-function mostrarImagen(url) {
-  var imagen = document.createElement("img");
+function mostrarImagen(
+  url,
+  generacionActual
+) {
+  resolverURLLocal(url).then(
+    function (urlReproduccion) {
+      if (
+        generacionActual !==
+        generacionReproduccion
+      ) {
+        return;
+      }
 
-  imagen.src = url;
-  imagen.alt = "Promoción";
+      var imagen =
+        document.createElement("img");
 
-  imagen.onload = function () {
-    var segundos =
-      Number(pantalla.duracion_imagen) || 7;
+      imagen.src = urlReproduccion;
+      imagen.alt = "Promoción";
 
-    temporizador = setTimeout(
-      siguientePromocionComun,
-      segundos * 1000
-    );
-  };
+      imagen.onload = function () {
+        var segundos =
+          Number(
+            pantalla.duracion_imagen
+          ) || 7;
 
-  imagen.onerror = function () {
-    siguientePromocionComun();
-  };
+        precargarSiguientePromocionComun();
 
-  slider.appendChild(imagen);
+        temporizador = setTimeout(
+          siguientePromocionComun,
+          segundos * 1000
+        );
+      };
+
+      imagen.onerror = function () {
+        siguientePromocionComun();
+      };
+
+      slider.appendChild(imagen);
+    }
+  );
 }
 
 function configurarVideoBase(video) {
@@ -592,39 +1012,57 @@ function reproducirSilenciosamente(video, alFallar) {
   }
 }
 
-function mostrarVideoComun(url) {
-  var video = document.createElement("video");
-
-  configurarVideoBase(video);
-
-  video.src = url;
-  video.loop = promociones.length === 1;
-
-  if (video.loop) {
-    video.setAttribute(
-      "loop",
-      "true"
-    );
-  } else {
-    video.onended = function () {
-      siguientePromocionComun();
-    };
-  }
-
-  video.onerror = function () {
-    if (!video.loop) {
-      siguientePromocionComun();
-    }
-  };
-
-  slider.appendChild(video);
-
-  reproducirSilenciosamente(
-    video,
-    function () {
-      if (!video.loop) {
-        siguientePromocionComun();
+function mostrarVideoComun(
+  url,
+  generacionActual
+) {
+  resolverURLLocal(url).then(
+    function (urlReproduccion) {
+      if (
+        generacionActual !==
+        generacionReproduccion
+      ) {
+        return;
       }
+
+      var video =
+        document.createElement("video");
+
+      configurarVideoBase(video);
+
+      video.src = urlReproduccion;
+      video.loop =
+        promociones.length === 1;
+
+      if (video.loop) {
+        video.setAttribute(
+          "loop",
+          "true"
+        );
+      } else {
+        video.onended = function () {
+          siguientePromocionComun();
+        };
+      }
+
+      video.onerror = function () {
+        if (!video.loop) {
+          siguientePromocionComun();
+        }
+      };
+
+      slider.appendChild(video);
+
+      precargarSiguientePromocionComun();
+
+      reproducirSilenciosamente(
+        video,
+        function () {
+          if (!video.loop) {
+            siguientePromocionComun();
+          }
+        }
+      );
     }
   );
 }
@@ -689,69 +1127,134 @@ function crearVideoDeSecuencia(url, visible) {
   return video;
 }
 
-function iniciarSecuenciaContinuaDeVideos() {
+function iniciarSecuenciaContinuaDeVideos(
+  generacionActual
+) {
   var archivoActual =
     obtenerArchivo(promociones[indice]);
 
-  videoActivo = crearVideoDeSecuencia(
-    archivoActual.url,
-    true
-  );
+  resolverURLLocal(
+    archivoActual.url
+  ).then(function (urlReproduccion) {
+    if (
+      generacionActual !==
+      generacionReproduccion
+    ) {
+      return;
+    }
 
-  videoActivo.onerror = function () {
-    avanzarVideoPorError();
-  };
+    videoActivo = crearVideoDeSecuencia(
+      urlReproduccion,
+      true
+    );
 
-  reproducirSilenciosamente(
-    videoActivo,
-    avanzarVideoPorError
-  );
+    videoActivo.onerror = function () {
+      avanzarVideoPorError();
+    };
 
-  if (promociones.length === 1) {
-    return;
-  }
+    reproducirSilenciosamente(
+      videoActivo,
+      avanzarVideoPorError
+    );
 
-  prepararSiguienteVideo();
+    if (promociones.length === 1) {
+      return;
+    }
 
-  intervaloTransicionVideo = setInterval(
-    verificarMomentoDeCambio,
-    100
-  );
+    prepararSiguienteVideo(
+      generacionActual
+    );
+
+    intervaloTransicionVideo =
+      setInterval(
+        verificarMomentoDeCambio,
+        100
+      );
+  });
 }
 
-function prepararSiguienteVideo() {
+function prepararSiguienteVideo(
+  generacionActual
+) {
   if (
     !promociones ||
     promociones.length < 2 ||
-    !videoActivo
+    !videoActivo ||
+    generacionActual !==
+      generacionReproduccion
   ) {
     return;
   }
 
   if (videoPreparado) {
-    detenerElementoVideo(videoPreparado);
+    detenerElementoVideo(
+      videoPreparado
+    );
+
     videoPreparado = null;
   }
 
-  indicePreparado = indice + 1;
+  var siguienteIndice = indice + 1;
 
-  if (indicePreparado >= promociones.length) {
-    indicePreparado = 0;
+  if (
+    siguienteIndice >= promociones.length
+  ) {
+    siguienteIndice = 0;
   }
 
   var archivoSiguiente =
-    obtenerArchivo(promociones[indicePreparado]);
+    obtenerArchivo(
+      promociones[siguienteIndice]
+    );
 
-  videoPreparado = crearVideoDeSecuencia(
-    archivoSiguiente.url,
-    false
-  );
-
-  videoPreparado.onerror = function () {
-    detenerElementoVideo(videoPreparado);
-    videoPreparado = null;
-    indicePreparado = -1;
+  var preparacion = {
+    generacion: generacionActual,
+    indice: siguienteIndice,
+    url: archivoSiguiente.url
   };
+
+  preparacionVideoEnCurso = preparacion;
+  indicePreparado = siguienteIndice;
+
+  resolverURLLocal(
+    archivoSiguiente.url
+  ).then(function (urlReproduccion) {
+    if (
+      preparacionVideoEnCurso !==
+        preparacion ||
+      generacionActual !==
+        generacionReproduccion ||
+      !videoActivo
+    ) {
+      return;
+    }
+
+    preparacionVideoEnCurso = null;
+
+    videoPreparado =
+      crearVideoDeSecuencia(
+        urlReproduccion,
+        false
+      );
+
+    videoPreparado.onerror = function () {
+      detenerElementoVideo(
+        videoPreparado
+      );
+
+      videoPreparado = null;
+      indicePreparado = -1;
+
+      setTimeout(
+        function () {
+          prepararSiguienteVideo(
+            generacionReproduccion
+          );
+        },
+        2000
+      );
+    };
+  });
 }
 
 function verificarMomentoDeCambio() {
@@ -835,7 +1338,9 @@ function activarVideoPreparado() {
           videoActivo.style.zIndex = "2";
         }
 
-        prepararSiguienteVideo();
+        prepararSiguienteVideo(
+          generacionReproduccion
+        );
       },
       40
     );

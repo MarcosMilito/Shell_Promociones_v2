@@ -1039,7 +1039,12 @@ async function subirArchivo(
   const { error } = await supabase.storage
     .from("promos")
     .upload(path, file, {
-      cacheControl: "3600",
+      /*
+        Los nombres de archivo son únicos, por eso podemos
+        conservarlos en caché durante un año sin riesgo de
+        mostrar una versión anterior.
+      */
+      cacheControl: "31536000",
       upsert: false
     });
 
